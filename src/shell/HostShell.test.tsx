@@ -240,7 +240,15 @@ describe("HostShell op → store → cms/sendElements injection", () => {
     const { adapter, received } = createFakeAdapter([
       payload("t1", 0, "seed", "hello"),
     ]);
-    render(<HostShell store={adapter} iframeOrigin="http://o.test:1" />);
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        blockTypes={[
+          { type: "text", label: "Text", defaultValue: () => "New text block" },
+        ]}
+      />,
+    );
 
     // Baseline: the connect effect re-injects the seed snapshot once.
     const baselineSent = sent.length;
@@ -253,7 +261,7 @@ describe("HostShell op → store → cms/sendElements injection", () => {
       onInsert?.("t1", 1, { type: "text" });
     });
 
-    // The op reached the store as an insert (with the demo default value).
+    // The op reached the store as an insert (with the registry default value).
     const insertOp = received.find((op) => op.kind === "insert");
     expect(insertOp).toBeDefined();
     expect(insertOp).toMatchObject({
@@ -268,6 +276,45 @@ describe("HostShell op → store → cms/sendElements injection", () => {
     const injectedNew = sent.find((p) => p.content.value === "inserted");
     expect(injectedNew).toBeDefined();
     expect(injectedNew?.targetId).toBe("t1");
+  });
+
+  it("seeds no insert default value when blockTypes is omitted (empty registry)", () => {
+    const { adapter, received } = createFakeAdapter();
+    render(<HostShell store={adapter} iframeOrigin="http://o.test:1" />);
+    act(() => {
+      hostState.lastOptions?.onInsert?.("t1", 0, { type: "text" });
+    });
+    const insertOp = received.find((op) => op.kind === "insert");
+    expect(insertOp).toMatchObject({ kind: "insert", payload: { type: "text" } });
+    // no `value` was seeded — the registry is empty
+    expect(
+      (insertOp as { payload: Record<string, unknown> }).payload.value,
+    ).toBeUndefined();
+  });
+
+  it("spreads a partial-CmsContent defaultValue into the insert payload", () => {
+    const { adapter, received } = createFakeAdapter();
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        blockTypes={[
+          {
+            type: "container",
+            label: "Container",
+            defaultValue: () => ({ column: true }),
+          },
+        ]}
+      />,
+    );
+    act(() => {
+      hostState.lastOptions?.onInsert?.("t1", 0, { type: "container" });
+    });
+    const insertOp = received.find((op) => op.kind === "insert");
+    expect(insertOp).toMatchObject({
+      kind: "insert",
+      payload: { type: "container", column: true },
+    });
   });
 
   it("routes a select op through the store without inserting content", () => {
