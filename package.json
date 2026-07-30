@@ -1,0 +1,63 @@
+{
+  "name": "@stardust-cms/dashboard",
+  "version": "0.0.0",
+  "description": "Extensible host dashboard boilerplate for in-iframe visual editors built on @stardust-cms/iframe-adapter.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Daniel Cassil <me@danielcassil.com>",
+  "homepage": "https://github.com/dcassil/stardust-dashboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dcassil/stardust-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dcassil/stardust-dashboard/issues"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./tokens": {
+      "import": "./dist/tokens/tokens.css"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node ./scripts/copy-assets.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "depcruise": "depcruise src --config .dependency-cruiser.cjs",
+    "lint:deps": "depcruise src --config .dependency-cruiser.cjs"
+  },
+  "peerDependencies": {
+    "@stardust-cms/iframe-adapter": "^0.1.0",
+    "frame-link": "^4.0.0",
+    "frame-link-react": "^4.0.0",
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@stardust-cms/iframe-adapter": "^0.1.0",
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "dependency-cruiser": "^16.0.0",
+    "frame-link": "^4.0.0",
+    "frame-link-react": "^4.0.0",
+    "jsdom": "^25.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
