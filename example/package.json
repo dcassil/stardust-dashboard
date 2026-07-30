@@ -1,0 +1,31 @@
+{
+  "name": "@stardust-cms/dashboard-example",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Reference example: Versioned Content Engine wired to the @stardust-cms/dashboard ContentStoreAdapter seam.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Daniel Cassil <me@danielcassil.com>",
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@stardust-cms/dashboard": "file:..",
+    "@stardust-cms/iframe-adapter": "^0.1.0",
+    "frame-link": "^4.0.0",
+    "frame-link-react": "^4.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "versioned-content-engine": "^0.1.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "jsdom": "^25.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
