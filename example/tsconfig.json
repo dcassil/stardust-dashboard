@@ -23,5 +23,13 @@
     "verbatimModuleSyntax": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src", "vitest.config.ts"]
+  "include": [
+    "src",
+    "shared",
+    "admin",
+    "site",
+    "e2e",
+    "vite-env.d.ts",
+    "vitest.config.ts"
+  ]
 }
