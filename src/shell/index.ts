@@ -12,7 +12,11 @@ export {
   DEFAULT_DESIGN_WIDTH,
   DEFAULT_DESIGN_HEIGHT,
 } from "./HostShell.js";
-export type { HostShellProps, HostShellLayoutParts } from "./HostShell.js";
+export type {
+  HostShellProps,
+  HostShellLayoutParts,
+  OverlayChromeParts,
+} from "./HostShell.js";
 
 export { ConnectionStatus } from "./ConnectionStatus.js";
 export type { ConnectionStatusProps } from "./ConnectionStatus.js";

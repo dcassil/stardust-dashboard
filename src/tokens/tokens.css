@@ -1,12 +1,255 @@
 /**
- * @stardust-cms/dashboard theme tokens (placeholder).
+ * @stardust-cms/dashboard theme tokens + bundled component styling
+ * (SIFR-I-0007 REQ-006, Detailed Design §6).
  *
- * Importable via `@stardust-cms/dashboard/tokens`. A later task (theme tokens /
- * WS-5) replaces these with the real overridable default theme. Consumers
- * override by redeclaring these custom properties under their own `:root` or a
- * scoping selector.
+ * Import once, near your app root:
+ *
+ *   import "@stardust-cms/dashboard/tokens";
+ *
+ * ## Two layers, one file
+ *
+ *  1. `:root` **theme tokens** — the overridable design tokens (colors,
+ *     spacing, radii, accents). This is a minimal DEFAULT LIGHT THEME, extracted
+ *     and lightened from the SIFR demo's `styles.css`. Every bundled component
+ *     (`Overlays`, `ConnectionStatus`, the `HostShell` canvas/layout) styles
+ *     itself EXCLUSIVELY through these `var(--sd-*)` tokens — no hard-coded
+ *     colors in the structural rules below.
+ *  2. **structural rules** — the `admin-*` / `ov-*` class families the bundled
+ *     components emit, written entirely in terms of the tokens above.
+ *
+ * ## Overriding (no forking)
+ *
+ * Redeclare any token under your own `:root` (or a scoping selector) AFTER this
+ * import; the structural rules pick it up automatically. Example — a dark canvas
+ * with a teal accent and a green delete affordance:
+ *
+ *   :root {
+ *     --sd-bg: #0f172a;
+ *     --sd-panel-fg: #e2e8f0;
+ *     --sd-accent: #14b8a6;
+ *     --sd-danger: #22c55e;
+ *   }
+ *
+ * To restyle a specific region instead of the theme, pass a `className` /
+ * `targetClassName` / `itemClassName` / `renderItemChrome` prop to `Overlays`
+ * (or `renderStatus` / `renderLayout` to `HostShell`) — the class props default
+ * to the `ov-*` / `admin-*` names below but are fully overridable.
  */
+
+/* -------------------------------------------------------------------------- */
+/* Theme tokens — minimal default LIGHT theme (override under your own :root)  */
+/* -------------------------------------------------------------------------- */
+
 :root {
-  /* Placeholder token — real design tokens land in the theming task. */
-  --sd-dashboard-placeholder: 0;
+  /* Surfaces */
+  --sd-bg: #f8fafc;
+  --sd-panel-bg: #ffffff;
+  --sd-panel-fg: #0f172a;
+  --sd-muted: #64748b;
+  --sd-border: #e2e8f0;
+  --sd-canvas-bg: #ffffff;
+
+  /* Accents */
+  --sd-accent: #6366f1;
+  --sd-accent-soft: rgba(99, 102, 241, 0.14);
+  --sd-selected: #ec4899;
+  --sd-selected-soft: rgba(236, 72, 153, 0.08);
+
+  /* Status */
+  --sd-ok: #16a34a;
+  --sd-warn: #d97706;
+  --sd-danger: #dc2626;
+
+  /* Shape & rhythm */
+  --sd-radius: 8px;
+  --sd-gap: 16px;
+  --sd-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+
+  /* Typography (only a family default; sizes stay in the structural rules). */
+  --sd-font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Root + canvas                                                              */
+/* -------------------------------------------------------------------------- */
+
+.admin-root {
+  min-height: 100vh;
+  color: var(--sd-panel-fg);
+  background: var(--sd-bg);
+  font-family: var(--sd-font-family);
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  align-items: start;
+}
+
+.admin-main {
+  min-width: 0;
+}
+
+.admin-canvas-scroll {
+  padding: 32px;
+  overflow: auto;
+}
+
+.admin-canvas {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--sd-canvas-bg);
+  border-radius: var(--sd-radius);
+  box-shadow: var(--sd-shadow);
+}
+
+.admin-canvas__iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  border: 0;
+}
+
+.admin-overlay-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.admin-overlay-layer > * {
+  pointer-events: auto;
+}
+
+/* -------------------------------------------------------------------------- */
+/* ConnectionStatus strip                                                     */
+/* -------------------------------------------------------------------------- */
+
+.admin-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--sd-panel-bg);
+  border-bottom: 1px solid var(--sd-border);
+  color: var(--sd-panel-fg);
+  font-size: 13px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.admin-status__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sd-muted);
+  flex: 0 0 auto;
+}
+.admin-status__dot--connecting {
+  background: var(--sd-warn);
+  animation: sd-pulse 1s infinite;
+}
+.admin-status__dot--connected {
+  background: var(--sd-ok);
+}
+.admin-status__dot--error {
+  background: var(--sd-danger);
+}
+.admin-status__dot--disconnected {
+  background: var(--sd-muted);
+}
+
+@keyframes sd-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.admin-status__label {
+  font-weight: 600;
+}
+.admin-status__spacer {
+  flex: 1;
+}
+.admin-status__meta {
+  color: var(--sd-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Overlays — chrome over the published unstyled primitives                   */
+/* -------------------------------------------------------------------------- */
+
+.ov-group {
+  pointer-events: none;
+}
+.ov-group > * {
+  pointer-events: auto;
+}
+
+.ov-target {
+  border: 1.5px dashed var(--sd-accent-soft);
+  border-radius: 6px;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+.ov-target:hover {
+  background: var(--sd-accent-soft);
+  border-color: var(--sd-accent);
+}
+.ov-target--container {
+  border-style: solid;
+  border-color: var(--sd-selected-soft);
+}
+.ov-target--selected {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 1px;
+}
+
+.ov-item-hit {
+  cursor: grab;
+}
+
+.ov-item {
+  border-radius: 4px;
+  cursor: pointer;
+  transition: box-shadow 0.12s ease;
+}
+.ov-item:hover {
+  box-shadow: inset 0 0 0 2px var(--sd-accent);
+}
+.ov-item--selected {
+  box-shadow: inset 0 0 0 2px var(--sd-selected);
+  background: var(--sd-selected-soft);
+}
+
+.ov-delete {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sd-danger);
+  color: #fff;
+  font-size: 15px;
+  line-height: 22px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+  z-index: 2;
+}
+.ov-group:hover .ov-delete {
+  opacity: 0.92;
+}
+.ov-delete:hover {
+  opacity: 1;
 }
