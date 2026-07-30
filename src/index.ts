@@ -64,3 +64,18 @@ export type {
   HostShellLayoutParts,
   ConnectionStatusProps,
 } from "./shell/index.js";
+
+/* -------------------------------------------------------------------------- */
+/* Block registry (SIFR-T-0034)                                               */
+/* -------------------------------------------------------------------------- */
+
+export type {
+  BlockType,
+  BlockTypeRegistry,
+  BlockFieldPatch,
+} from "./blocks/BlockType.js";
+export { findBlockType } from "./blocks/BlockType.js";
+export { Palette } from "./blocks/Palette.js";
+export type { PaletteProps } from "./blocks/Palette.js";
+export { SidePanel } from "./blocks/SidePanel.js";
+export type { SidePanelProps } from "./blocks/SidePanel.js";

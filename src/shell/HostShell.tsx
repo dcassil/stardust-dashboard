@@ -65,6 +65,8 @@ import type {
   ContentStoreAdapter,
   HostContentOp,
 } from "../store/adapter.js";
+import type { BlockTypeRegistry } from "../blocks/BlockType.js";
+import { findBlockType } from "../blocks/BlockType.js";
 import { ConnectionStatus } from "./ConnectionStatus.js";
 import { useSendElements } from "./useSendElements.js";
 
@@ -78,6 +80,9 @@ export const DEFAULT_IFRAME_ORIGIN = "http://localhost:5174";
 export const DEFAULT_DESIGN_WIDTH = 1024;
 /** Default iframe document height (unscaled px); the canvas reserves this × scale. */
 export const DEFAULT_DESIGN_HEIGHT = 900;
+
+/** Stable empty registry used when `blockTypes` is omitted (no crash, no defaults). */
+const EMPTY_BLOCK_TYPES: BlockTypeRegistry = [];
 
 /* -------------------------------------------------------------------------- */
 /* Public types                                                               */
@@ -126,6 +131,15 @@ export interface HostShellProps {
   /** The injected content store. The ONLY place a concrete store enters. */
   store: ContentStoreAdapter;
   /**
+   * The block-type registry (SIFR-T-0034, REQ-004). Drives per-type insert
+   * defaults (via each block's `defaultValue()`) and, when the bundled
+   * {@link Palette}/{@link SidePanel} are composed as `children`, the palette
+   * entries and side-panel field editors. Omitted → an empty registry (no
+   * crash, no seeded insert defaults); the demo passes its own `text`/`image`.
+   * @default [] (empty registry)
+   */
+  blockTypes?: BlockTypeRegistry;
+  /**
    * Render-prop for the connection-status region, given the live connection
    * state + scale. Default: the bundled {@link ConnectionStatus} strip.
    */
@@ -165,17 +179,27 @@ function blankPayload(targetId: string, index: number): ContentPayload {
   };
 }
 
-/** Default value for a newly inserted block, by type (mirrors the demo). */
-function defaultValueFor(type: string): string | undefined {
-  switch (type) {
-    case "text":
-    case "number":
-      return "New text block";
-    case "image":
-      return "https://placehold.co/240x120/6366f1/fff?text=New";
-    default:
-      return undefined;
+/**
+ * Merge the block registry's `defaultValue()` for a newly inserted block into the
+ * insert payload. Replaces the demo's hard-coded text/image switch — the registry
+ * is now the single source of per-type insert defaults. A block type with no
+ * `defaultValue` (or no matching registry entry) seeds nothing. A bare-value
+ * result is written to `payload.value`; a partial-`CmsContent` result is spread
+ * over the payload so a block can seed more than `value` (e.g. `column`).
+ */
+function applyInsertDefaults(
+  blockTypes: BlockTypeRegistry,
+  payload: InsertOp["payload"],
+): InsertOp["payload"] {
+  const blockType = findBlockType(blockTypes, payload.type);
+  const seed = blockType?.defaultValue?.();
+  if (seed === undefined) {
+    return payload;
   }
+  if (typeof seed === "object" && seed !== null) {
+    return { ...payload, ...seed };
+  }
+  return { ...payload, value: seed };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -206,6 +230,7 @@ interface HostShellCanvasProps {
   designWidth: number;
   designHeight: number;
   headerOffset: number;
+  blockTypes: BlockTypeRegistry;
   renderStatus: (state: ConnectionState, scale: number) => ReactNode;
   renderLayout: (parts: HostShellLayoutParts) => ReactNode;
   children: ReactNode;
@@ -222,6 +247,7 @@ function HostShellCanvas({
   designWidth,
   designHeight,
   headerOffset,
+  blockTypes,
   renderStatus,
   renderLayout,
   children,
@@ -269,15 +295,14 @@ function HostShellCanvas({
 
   const onInsert = useCallback(
     (targetId: string, index: number, payload: InsertOp["payload"]): void => {
-      const value = defaultValueFor(payload.type);
       dispatch({
         kind: "insert",
         targetId,
         index,
-        payload: { ...payload, ...(value !== undefined ? { value } : {}) },
+        payload: applyInsertDefaults(blockTypes, payload),
       });
     },
-    [dispatch],
+    [dispatch, blockTypes],
   );
 
   const onMove = useCallback(
@@ -373,6 +398,7 @@ export function HostShell(props: HostShellProps): ReactNode {
     designHeight = DEFAULT_DESIGN_HEIGHT,
     headerOffset = 0,
     store,
+    blockTypes = EMPTY_BLOCK_TYPES,
     renderStatus,
     renderLayout = defaultRenderLayout,
     children,
@@ -414,6 +440,7 @@ export function HostShell(props: HostShellProps): ReactNode {
             designWidth={designWidth}
             designHeight={designHeight}
             headerOffset={headerOffset}
+            blockTypes={blockTypes}
             renderStatus={resolvedRenderStatus}
             renderLayout={renderLayout}
           >
