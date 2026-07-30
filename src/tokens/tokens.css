@@ -1,0 +1,12 @@
+/**
+ * @stardust-cms/dashboard theme tokens (placeholder).
+ *
+ * Importable via `@stardust-cms/dashboard/tokens`. A later task (theme tokens /
+ * WS-5) replaces these with the real overridable default theme. Consumers
+ * override by redeclaring these custom properties under their own `:root` or a
+ * scoping selector.
+ */
+:root {
+  /* Placeholder token — real design tokens land in the theming task. */
+  --sd-dashboard-placeholder: 0;
+}
