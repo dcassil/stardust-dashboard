@@ -47,3 +47,20 @@ export type {
   SelectOp,
   ContentLocation,
 } from "@stardust-cms/iframe-adapter/host";
+
+/* -------------------------------------------------------------------------- */
+/* Host shell (SIFR-T-0033)                                                   */
+/* -------------------------------------------------------------------------- */
+
+export {
+  HostShell,
+  ConnectionStatus,
+  DEFAULT_IFRAME_ORIGIN,
+  DEFAULT_DESIGN_WIDTH,
+  DEFAULT_DESIGN_HEIGHT,
+} from "./shell/index.js";
+export type {
+  HostShellProps,
+  HostShellLayoutParts,
+  ConnectionStatusProps,
+} from "./shell/index.js";
