@@ -1,0 +1,198 @@
+/**
+ * Reference-example admin styles.
+ *
+ * The shell's `@stardust-cms/dashboard/tokens` (imported in App.tsx) supplies the
+ * canvas / overlay / connection-status structural classes and the `--sd-*` theme
+ * tokens. This file adds ONLY the demo-specific chrome the custom `renderLayout`
+ * introduces: the controls bar, the two-column layout, the side column, the
+ * palette, and the side-panel field styling — all in terms of the shell tokens
+ * so it inherits the theme.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--sd-bg, #f8fafc);
+  color: var(--sd-panel-fg, #0f172a);
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 20px;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.admin-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* --- Controls bar (draft/live toggle, publish, version selector) --- */
+
+.admin-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--sd-panel-bg, #ffffff);
+  border: 1px solid var(--sd-border, #e2e8f0);
+  border-radius: 10px;
+}
+
+.admin-controls__group {
+  display: inline-flex;
+  border: 1px solid var(--sd-border, #e2e8f0);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.admin-controls__group button {
+  border: none;
+  background: transparent;
+  padding: 6px 14px;
+  font: inherit;
+  cursor: pointer;
+  color: var(--sd-muted, #64748b);
+}
+
+.admin-controls__group button.is-active {
+  background: var(--sd-accent, #6366f1);
+  color: #ffffff;
+}
+
+.admin-controls__publish {
+  border: none;
+  border-radius: 8px;
+  background: var(--sd-accent, #6366f1);
+  color: #ffffff;
+  padding: 7px 16px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-controls__versions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--sd-muted, #64748b);
+}
+
+.admin-controls__versions select {
+  font: inherit;
+  padding: 5px 8px;
+  border: 1px solid var(--sd-border, #e2e8f0);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.admin-controls__mode {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.admin-controls__mode[data-readonly="true"] {
+  color: #b45309;
+}
+
+.admin-controls__mode[data-readonly="false"] {
+  color: #15803d;
+}
+
+/* --- Side column: palette + side panel --- */
+
+.admin-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
+  background: var(--sd-panel-bg, #ffffff);
+  border: 1px solid var(--sd-border, #e2e8f0);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+
+.panel__title {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.panel__hint {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--sd-muted, #64748b);
+}
+
+.panel__meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+
+.panel__meta dt {
+  color: var(--sd-muted, #64748b);
+}
+
+.panel__meta dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.panel__field textarea,
+.panel__field input {
+  font: inherit;
+  padding: 8px;
+  border: 1px solid var(--sd-border, #e2e8f0);
+  border-radius: 8px;
+  resize: vertical;
+}
+
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.palette__item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: 1px dashed var(--sd-accent, #6366f1);
+  border-radius: 8px;
+  cursor: grab;
+  font-size: 13px;
+  background: #ffffff;
+}
+
+.palette__type {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sd-accent, #6366f1);
+  font-weight: 700;
+}

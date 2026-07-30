@@ -60,3 +60,69 @@ pnpm install
 pnpm typecheck
 pnpm test
 ```
+
+## The runnable demo (`pnpm demo`)
+
+Beyond the adapter unit tests, this package ships a full, runnable reference
+editor that re-bases the SIFR demo/admin onto the `@stardust-cms/dashboard`
+boilerplate with this VCE adapter as its store — the initiative's proof artifact,
+which also satisfies **SVER-I-0004 REQ-006** (the engine's historical-fidelity
+guarantee, made visible in a real iframe editor).
+
+```sh
+# From the repo root, build the file-linked shell + its /tokens export first:
+pnpm install && pnpm build
+
+# Then in example/:
+pnpm install
+pnpm demo          # starts site (:5174) + admin (:5173) via concurrently
+```
+
+Open the admin at http://localhost:5173. It embeds the site (http://localhost:5174)
+in a cross-origin iframe (explicit origins, never `"*"` — NFR-002) and gives you
+a working visual editor:
+
+- **`admin/`** — a Vite React app rendering `<HostShell>` from the LOCAL shell
+  (`@stardust-cms/dashboard` via the `file:..` link), backed by
+  `createVersionedContentStoreAdapter()`, a `BlockType[]` registry (`text` +
+  `image`), the bundled `Overlays`/`Palette`/`SidePanel`, and
+  `import "@stardust-cms/dashboard/tokens"`.
+- **`site/`** — the iframe content app: 4–6 editable `data-cms` targets incl. a
+  nested container, using `@stardust-cms/iframe-adapter/iframe` +
+  `StardustAdapterProvider`.
+
+### The demo controls the VCE adapter enables
+
+Three controls surface the engine's draft/live/publish/history through the
+adapter's optional capability methods:
+
+- **Draft / Live toggle** — flips the injected view between `getDraft()` and
+  `getLive()`. Draft edits are invisible in Live until published.
+- **Publish** — `adapter.publish()`, advancing live to the current draft; each
+  publish records a version.
+- **Previous-version selector** — `adapter.materializeVersion(v)`, injecting an
+  older version READ-ONLY. Select a **pre-delete** version and the deleted item
+  reappears — the historical-fidelity payoff.
+
+### Extending the two seams (adopt with your own store + blocks)
+
+- **Store-adapter seam** — implement `ContentStoreAdapter`
+  (`getSnapshot()` + `apply(op)`; optional `publish`/`getLive`/`materializeVersion`)
+  against your store and pass it as `<HostShell store={...} />`. The VCE adapter in
+  `src/versionedContentStoreAdapter.ts` is the copy-pasteable reference.
+- **Block-registry seam** — define a `BlockType[]` (`{ type, label, defaultValue?,
+  renderField? }`) and pass it as `blockTypes`. See `admin/blockTypes.tsx`.
+
+### Tests
+
+- `pnpm test` — unit + integration (jsdom), covering the SIFR↔VCE wiring:
+  overlay op → adapter → engine → injected snapshot; draft edits invisible in live
+  until publish; a pre-delete version shows a deleted item read-only; the
+  store-adapter swap and block-type override seams. (Never launches a browser.)
+- `pnpm demo:build` — production-builds both apps.
+- `pnpm demo:e2e` — the Playwright e2e (`e2e/edit-publish-history.e2e.ts`): the
+  full loop against a real browser + real cross-origin iframe — seed → edit →
+  preview draft → publish → delete → publish → select the PRE-DELETE version and
+  assert the deleted item reappears (SVER-I-0004 REQ-006). Install the browser
+  once with `npx playwright install chromium`. A proof still is written to
+  `e2e/artifacts/pre-delete-history.png`.
