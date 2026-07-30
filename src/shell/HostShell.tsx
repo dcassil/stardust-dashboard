@@ -45,6 +45,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
 import { FrameLinkProvider } from "frame-link-react";
@@ -53,6 +54,7 @@ import type {
   ConnectionState,
   ContentLocation,
   InsertOp,
+  MappedTarget,
   OperationCallbacks,
 } from "@stardust-cms/iframe-adapter/host";
 import type { ContentPayload } from "@stardust-cms/iframe-adapter/protocol";
@@ -67,6 +69,7 @@ import type {
 } from "../store/adapter.js";
 import type { BlockTypeRegistry } from "../blocks/BlockType.js";
 import { findBlockType } from "../blocks/BlockType.js";
+import { Overlays } from "../overlays/Overlays.js";
 import { ConnectionStatus } from "./ConnectionStatus.js";
 import { useSendElements } from "./useSendElements.js";
 
@@ -87,6 +90,27 @@ const EMPTY_BLOCK_TYPES: BlockTypeRegistry = [];
 /* -------------------------------------------------------------------------- */
 /* Public types                                                               */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The host state handed to a custom {@link HostShellProps.renderOverlayChrome}
+ * (SIFR-T-0035, REQ-005). Everything the overlay layer needs to wrap the
+ * published primitives: the mapped targets, the edit-intent callbacks, the live
+ * scale, and the shell-tracked selection. Passing a `renderOverlayChrome` lets a
+ * consumer restyle or replace the overlay chrome without forking; the default
+ * renders the bundled {@link Overlays}.
+ */
+export interface OverlayChromeParts {
+  /** Targets mapped into host coordinates — `useStardustHost().targets`. */
+  targets: MappedTarget[];
+  /** Edit-intent callbacks bundled by the host, for the overlay primitives. */
+  callbacks: OperationCallbacks;
+  /** Current iframe render scale. */
+  scale: number;
+  /** The shell-tracked selected target id (drives the target selected ring). */
+  selectedTargetId: string | null;
+  /** The shell-tracked selected content id (drives the item selected ring). */
+  selectedContentId: string | null;
+}
 
 /** The composed regions handed to a custom {@link HostShellProps.renderLayout}. */
 export interface HostShellLayoutParts {
@@ -150,8 +174,19 @@ export interface HostShellProps {
    */
   renderLayout?: (parts: HostShellLayoutParts) => ReactNode;
   /**
-   * The overlay / palette / side-panel layer, rendered over the scaled canvas.
-   * Later tasks supply block-type-driven palette/side-panel here.
+   * Render-prop for the overlay chrome layered over the scaled canvas
+   * (SIFR-T-0035, REQ-005). Given the mapped targets, host callbacks, scale, and
+   * selection, it returns the overlay layer. Default: the bundled
+   * {@link Overlays} wrapping the published `TargetAreaOverlay`/`ContentItemOverlay`
+   * primitives with the `ov-*` classes + a store-wired delete button. Override to
+   * restyle (custom class names) or replace the chrome (custom `renderItemChrome`)
+   * without forking. Rendered before `children` in the overlay layer.
+   */
+  renderOverlayChrome?: (parts: OverlayChromeParts) => ReactNode;
+  /**
+   * The palette / side-panel (and any extra overlay) layer, rendered over the
+   * scaled canvas after the overlay chrome. Block-type-driven palette/side-panel
+   * plug in here.
    */
   children?: ReactNode;
 }
@@ -206,6 +241,27 @@ function applyInsertDefaults(
 /* Default slots                                                              */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Default overlay chrome: the bundled {@link Overlays} wrapping the published
+ * primitives with the `ov-*` classes + the store-wired delete button. Selection
+ * is threaded so the selected ring reflects the shell-tracked selection.
+ */
+function defaultRenderOverlayChrome({
+  targets,
+  callbacks,
+  selectedTargetId,
+  selectedContentId,
+}: OverlayChromeParts): ReactNode {
+  return (
+    <Overlays
+      targets={targets}
+      callbacks={callbacks}
+      selectedTargetId={selectedTargetId}
+      selectedContentId={selectedContentId}
+    />
+  );
+}
+
 function defaultRenderLayout({
   canvas,
   status,
@@ -233,6 +289,7 @@ interface HostShellCanvasProps {
   blockTypes: BlockTypeRegistry;
   renderStatus: (state: ConnectionState, scale: number) => ReactNode;
   renderLayout: (parts: HostShellLayoutParts) => ReactNode;
+  renderOverlayChrome: (parts: OverlayChromeParts) => ReactNode;
   children: ReactNode;
 }
 
@@ -250,11 +307,21 @@ function HostShellCanvas({
   blockTypes,
   renderStatus,
   renderLayout,
+  renderOverlayChrome,
   children,
 }: HostShellCanvasProps): ReactNode {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { apply, store } = useContentStore();
   const sendElements = useSendElements();
+
+  // Shell-tracked selection, so the overlay chrome can render a selected ring.
+  // Selection is ALSO dispatched through the store as a SelectOp (below) to keep
+  // every overlay/panel intent flowing through the single `apply` entry point;
+  // this local mirror only drives the visual selected state.
+  const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
+  const [selectedContentId, setSelectedContentId] = useState<string | null>(
+    null,
+  );
 
   // Track the previous max index per target so we can blank orphaned trailing
   // slots after a delete/move that shortens a target (the iframe merge never
@@ -314,6 +381,8 @@ function HostShellCanvas({
 
   const onSelect = useCallback(
     (targetId: string, contentId?: string): void => {
+      setSelectedTargetId(targetId);
+      setSelectedContentId(contentId ?? null);
       dispatch(
         contentId !== undefined
           ? { kind: "select", targetId, contentId }
@@ -328,16 +397,29 @@ function HostShellCanvas({
     [onInsert, onMove, onSelect],
   );
 
-  const { scale, connectionState } = useStardustHost(iframeRef, {
-    origin: iframeOrigin,
-    headerOffset,
-    ...(operationCallbacks.onInsert
-      ? { onInsert: operationCallbacks.onInsert }
-      : {}),
-    ...(operationCallbacks.onMove ? { onMove: operationCallbacks.onMove } : {}),
-    ...(operationCallbacks.onSelect
-      ? { onSelect: operationCallbacks.onSelect }
-      : {}),
+  const { scale, connectionState, targets, callbacks } = useStardustHost(
+    iframeRef,
+    {
+      origin: iframeOrigin,
+      headerOffset,
+      ...(operationCallbacks.onInsert
+        ? { onInsert: operationCallbacks.onInsert }
+        : {}),
+      ...(operationCallbacks.onMove
+        ? { onMove: operationCallbacks.onMove }
+        : {}),
+      ...(operationCallbacks.onSelect
+        ? { onSelect: operationCallbacks.onSelect }
+        : {}),
+    },
+  );
+
+  const overlayChrome = renderOverlayChrome({
+    targets,
+    callbacks,
+    scale,
+    selectedTargetId,
+    selectedContentId,
   });
 
   // On (re)connect, push the full snapshot so the iframe reflects admin state.
@@ -372,7 +454,10 @@ function HostShellCanvas({
         {/* Overlay layer: absolutely positioned over the scaled canvas,
             sharing its top-left origin. mapGeometry has already applied
             `scale`, so no further transform is needed here. */}
-        <div className="admin-overlay-layer">{children}</div>
+        <div className="admin-overlay-layer">
+          {overlayChrome}
+          {children}
+        </div>
       </div>
     </div>
   );
@@ -401,6 +486,7 @@ export function HostShell(props: HostShellProps): ReactNode {
     blockTypes = EMPTY_BLOCK_TYPES,
     renderStatus,
     renderLayout = defaultRenderLayout,
+    renderOverlayChrome = defaultRenderOverlayChrome,
     children,
   } = props;
 
@@ -443,6 +529,7 @@ export function HostShell(props: HostShellProps): ReactNode {
             blockTypes={blockTypes}
             renderStatus={resolvedRenderStatus}
             renderLayout={renderLayout}
+            renderOverlayChrome={renderOverlayChrome}
           >
             {children}
           </HostShellCanvas>

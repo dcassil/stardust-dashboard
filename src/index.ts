@@ -62,8 +62,30 @@ export {
 export type {
   HostShellProps,
   HostShellLayoutParts,
+  OverlayChromeParts,
   ConnectionStatusProps,
 } from "./shell/index.js";
+
+/* -------------------------------------------------------------------------- */
+/* Overlay chrome (SIFR-T-0035)                                               */
+/* -------------------------------------------------------------------------- */
+
+export {
+  Overlays,
+  DEFAULT_TARGET_CLASS_NAME,
+  DEFAULT_SELECTED_TARGET_CLASS_NAME,
+  DEFAULT_CONTAINER_TARGET_CLASS_NAME,
+  DEFAULT_TARGET_ITEM_CLASS_NAME,
+  DEFAULT_ITEM_CLASS_NAME,
+  DEFAULT_SELECTED_ITEM_CLASS_NAME,
+  DEFAULT_GROUP_CLASS_NAME,
+  DEFAULT_DELETE_CLASS_NAME,
+} from "./overlays/index.js";
+export type {
+  OverlaysProps,
+  ItemChromeActions,
+  RenderItemChrome,
+} from "./overlays/index.js";
 
 /* -------------------------------------------------------------------------- */
 /* Block registry (SIFR-T-0034)                                               */
