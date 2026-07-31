@@ -61,15 +61,17 @@ vi.mock("@stardust-cms/iframe-adapter/host", () => ({
   },
 }));
 
-// Capture every payload pushed through `cms/sendElements`.
+// Capture every payload pushed through `cms/sendElements`. The sender is a
+// STABLE function (module-level, not recreated per render) so `useSendElements`
+// mirrors a real hook's stable identity — a fresh function each render would
+// re-fire the shell's inject effects and mask/inject double-sends.
 const sent: ContentPayload[] = [];
+const stableSend = (payload: ContentPayload): Promise<void> => {
+  sent.push(payload);
+  return Promise.resolve();
+};
 vi.mock("./useSendElements.js", () => ({
-  useSendElements:
-    () =>
-    (payload: ContentPayload): Promise<void> => {
-      sent.push(payload);
-      return Promise.resolve();
-    },
+  useSendElements: () => stableSend,
 }));
 
 // `FrameLinkProvider` is transport chrome irrelevant to this shell's logic;
@@ -111,8 +113,25 @@ function createFakeAdapter(seed: ContentPayload[] = []): {
           ...items,
           payload(op.targetId, op.index, `new-${items.length}`, "inserted"),
         ];
+      } else if (op.kind === "delete") {
+        items = items.filter(
+          (p) =>
+            !(p.targetId === op.targetId && p.contentId === op.contentId),
+        );
+      } else if (op.kind === "edit") {
+        items = items.map((p) =>
+          p.targetId === op.targetId && p.contentId === op.contentId
+            ? {
+                ...p,
+                content: {
+                  ...p.content,
+                  value: String(op.patch.value ?? p.content.value),
+                },
+              }
+            : p,
+        );
       }
-      // select/move/delete/edit: return a fresh snapshot (identity changes).
+      // select/move: return a fresh snapshot (identity changes).
       return [...items];
     },
   };
@@ -328,5 +347,185 @@ describe("HostShell op → store → cms/sendElements injection", () => {
 
     expect(received.some((op) => op.kind === "select")).toBe(true);
     expect(received.some((op) => op.kind === "insert")).toBe(false);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* B1: re-inject on EVERY snapshot change (delete/edit now live)              */
+/* -------------------------------------------------------------------------- */
+
+// A child that grabs the store's `apply` so a test can drive delete/edit ops
+// through the store DIRECTLY (as the overlay delete button and consumer side
+// panels do), bypassing the shell's insert/move/select callbacks.
+const { useContentStore } = await import("../store/StoreProvider.js");
+let capturedApply: ((op: HostContentOp) => ContentSnapshot) | null = null;
+function ApplyGrabber(): null {
+  capturedApply = useContentStore().apply;
+  return null;
+}
+
+describe("HostShell re-injects on snapshot change (B1)", () => {
+  it("re-injects the updated snapshot when a delete is applied via the store, blanking the orphaned trailing slot", () => {
+    const { adapter } = createFakeAdapter([
+      payload("t1", 0, "a", "first"),
+      payload("t1", 1, "b", "second"),
+    ]);
+    capturedApply = null;
+    render(
+      <HostShell store={adapter} iframeOrigin="http://o.test:1">
+        <ApplyGrabber />
+      </HostShell>,
+    );
+    expect(capturedApply).toBeTypeOf("function");
+
+    // Baseline: the connect effect injected the two seeded items once.
+    const baselineSent = sent.length;
+    sent.length = 0;
+
+    // Delete the LAST item (index 1) — shortens t1 from maxIndex 1 to 0.
+    act(() => {
+      capturedApply?.({ kind: "delete", targetId: "t1", contentId: "b" });
+    });
+
+    // Re-injection happened (the snapshot-change effect fired).
+    expect(sent.length).toBeGreaterThan(0);
+    // The surviving item was re-injected...
+    expect(sent.some((p) => p.contentId === "a")).toBe(true);
+    // ...and the orphaned trailing slot (index 1) was blanked.
+    const blank = sent.find(
+      (p) => p.targetId === "t1" && p.index === 1 && p.content.value === "",
+    );
+    expect(blank).toBeDefined();
+    // The deleted item's content is NOT re-injected as live content.
+    expect(
+      sent.some((p) => p.contentId === "b" && p.content.value === "second"),
+    ).toBe(false);
+    expect(baselineSent).toBeGreaterThanOrEqual(2);
+  });
+
+  it("re-injects the updated snapshot when an edit is applied via the store", () => {
+    const { adapter } = createFakeAdapter([payload("t1", 0, "a", "before")]);
+    capturedApply = null;
+    render(
+      <HostShell store={adapter} iframeOrigin="http://o.test:1">
+        <ApplyGrabber />
+      </HostShell>,
+    );
+    sent.length = 0;
+
+    act(() => {
+      capturedApply?.({
+        kind: "edit",
+        targetId: "t1",
+        contentId: "a",
+        patch: { value: "after" },
+      });
+    });
+
+    const edited = sent.find((p) => p.contentId === "a");
+    expect(edited).toBeDefined();
+    expect(edited?.content.value).toBe("after");
+  });
+
+  it("re-injects insert/move/select EXACTLY once each (no double-injection)", () => {
+    const { adapter } = createFakeAdapter([payload("t1", 0, "seed", "hi")]);
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        blockTypes={[{ type: "text", label: "Text" }]}
+      />,
+    );
+
+    // Insert: one snapshot change → the new item injected exactly once.
+    sent.length = 0;
+    act(() => {
+      hostState.lastOptions?.onInsert?.("t1", 1, { type: "text" });
+    });
+    expect(sent.filter((p) => p.content.value === "inserted")).toHaveLength(1);
+
+    // Move: one snapshot change → the (unchanged-count) snapshot injected once.
+    // The seed item appears exactly once per re-inject; a double-inject would
+    // duplicate it.
+    sent.length = 0;
+    act(() => {
+      hostState.lastOptions?.onMove?.(
+        { targetId: "t1", contentId: "seed", index: 0 },
+        { targetId: "t1", contentId: "seed", index: 0 },
+      );
+    });
+    expect(sent.filter((p) => p.contentId === "seed")).toHaveLength(1);
+
+    // Select: one snapshot change → injected once (select mutates no content).
+    sent.length = 0;
+    act(() => {
+      hostState.lastOptions?.onSelect?.("t1", "seed");
+    });
+    expect(sent.filter((p) => p.contentId === "seed")).toHaveLength(1);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* B2: shell-tracked selection exposed to renderLayout + useHostSelection      */
+/* -------------------------------------------------------------------------- */
+
+const { useHostSelection } = await import("./HostShell.js");
+
+describe("HostShell exposes tracked selection (B2)", () => {
+  it("passes selectedTargetId/selectedContentId to renderLayout", () => {
+    const { adapter } = createFakeAdapter();
+    let seen: {
+      selectedTargetId: string | null;
+      selectedContentId: string | null;
+    } = { selectedTargetId: null, selectedContentId: null };
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        renderLayout={({ canvas, selectedTargetId, selectedContentId }) => {
+          seen = { selectedTargetId, selectedContentId };
+          return <div data-testid="layout">{canvas}</div>;
+        }}
+      />,
+    );
+
+    // Initially nothing selected.
+    expect(seen).toEqual({
+      selectedTargetId: null,
+      selectedContentId: null,
+    });
+
+    // Drive a selection through the shell's onSelect.
+    act(() => {
+      hostState.lastOptions?.onSelect?.("tX", "cY");
+    });
+    expect(seen).toEqual({
+      selectedTargetId: "tX",
+      selectedContentId: "cY",
+    });
+  });
+
+  it("exposes selection to descendants via useHostSelection() (no render-phase setState)", () => {
+    const { adapter } = createFakeAdapter();
+    let seen: {
+      selectedTargetId: string | null;
+      selectedContentId: string | null;
+    } = { selectedTargetId: null, selectedContentId: null };
+    function SelectionReader(): null {
+      seen = useHostSelection();
+      return null;
+    }
+    render(
+      <HostShell store={adapter} iframeOrigin="http://o.test:1">
+        <SelectionReader />
+      </HostShell>,
+    );
+
+    expect(seen.selectedTargetId).toBeNull();
+    act(() => {
+      hostState.lastOptions?.onSelect?.("tX");
+    });
+    expect(seen.selectedTargetId).toBe("tX");
+    expect(seen.selectedContentId).toBeNull();
   });
 });

@@ -8,6 +8,7 @@
 
 export {
   HostShell,
+  useHostSelection,
   DEFAULT_IFRAME_ORIGIN,
   DEFAULT_DESIGN_WIDTH,
   DEFAULT_DESIGN_HEIGHT,
@@ -16,6 +17,7 @@ export type {
   HostShellProps,
   HostShellLayoutParts,
   OverlayChromeParts,
+  HostSelection,
 } from "./HostShell.js";
 
 export { ConnectionStatus } from "./ConnectionStatus.js";

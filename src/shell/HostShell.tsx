@@ -41,7 +41,9 @@
  */
 
 import {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -120,6 +122,45 @@ export interface HostShellLayoutParts {
   status: ReactNode;
   /** The overlay/palette/side-panel layer passed to `HostShell` as `children`. */
   children: ReactNode;
+  /**
+   * The shell-tracked selected target id, exposed so a consumer's `renderLayout`
+   * (e.g. a side panel) can reflect the current selection WITHOUT mirroring it
+   * via a render-phase `setState` — which triggers React's "Cannot update a
+   * component while rendering a different component" warning and desyncs the
+   * sidebar. `null` when nothing is selected. Also available via
+   * {@link useHostSelection}.
+   */
+  selectedTargetId: string | null;
+  /**
+   * The shell-tracked selected content id (see {@link selectedTargetId}). `null`
+   * when a target — but no specific item — is selected, or nothing is selected.
+   */
+  selectedContentId: string | null;
+}
+
+/** The value surfaced by {@link useHostSelection}. */
+export interface HostSelection {
+  /** The shell-tracked selected target id, or `null`. */
+  selectedTargetId: string | null;
+  /** The shell-tracked selected content id, or `null`. */
+  selectedContentId: string | null;
+}
+
+const HostSelectionContext = createContext<HostSelection>({
+  selectedTargetId: null,
+  selectedContentId: null,
+});
+
+/**
+ * Read the shell-tracked selection from anywhere inside a {@link HostShell} tree
+ * (overlay children, a side panel, etc.). Returns `{ selectedTargetId,
+ * selectedContentId }`, both `null` when nothing is selected. This is the clean,
+ * warning-free way for a consumer side panel to follow selection — no render-phase
+ * `setState` mirroring required. Outside a `HostShell`, returns the empty
+ * selection default. Additive/backward-compatible.
+ */
+export function useHostSelection(): HostSelection {
+  return useContext(HostSelectionContext);
 }
 
 export interface HostShellProps {
@@ -311,7 +352,7 @@ function HostShellCanvas({
   children,
 }: HostShellCanvasProps): ReactNode {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { apply, store } = useContentStore();
+  const { apply, store, snapshot } = useContentStore();
   const sendElements = useSendElements();
 
   // Shell-tracked selection, so the overlay chrome can render a selected ring.
@@ -351,13 +392,17 @@ function HostShellCanvas({
     [sendElements],
   );
 
-  // Apply an op through the store, then re-inject the resulting snapshot.
+  // Apply an op through the store. Re-injection is NOT done here: applying an op
+  // updates the store snapshot (React state), and the single snapshot-change
+  // effect below is the ONE place that re-injects into the iframe. This keeps
+  // mutations that bypass `dispatch` and call `apply` directly — delete (via the
+  // overlay's delete button) and field edits (via a consumer side panel) — live,
+  // and avoids the double-injection that would occur if `dispatch` injected too.
   const dispatch = useCallback(
     (op: HostContentOp): void => {
-      const next = apply(op);
-      inject(next);
+      apply(op);
     },
-    [apply, inject],
+    [apply],
   );
 
   const onInsert = useCallback(
@@ -430,6 +475,35 @@ function HostShellCanvas({
     }
   }, [connected, inject, store]);
 
+  // Re-inject on EVERY snapshot change — the single re-inject point for all
+  // mutations. Any op that flows through the store (`apply`) updates `snapshot`
+  // here: insert/move/select via `dispatch`, AND delete/edit that call `apply`
+  // directly (overlay delete button, consumer side panels). Previously only
+  // `dispatch` re-injected, so delete/edit never reached the iframe until a full
+  // reconnect — this closes that gap so they are live.
+  //
+  // The first snapshot (initial mount / adopting a newly injected store) is
+  // skipped here: the connect effect above already pushes the full snapshot once
+  // connected, so injecting it again from this effect would be a redundant
+  // double-inject. Subsequent changes have no such coverage, so they inject here.
+  // Guarded by `snapshot` reference identity — `apply` returns a fresh array on
+  // every op, so genuine mutations always re-fire, and no op means no re-inject
+  // (no loop: `inject` only sends via the mocked/real transport, it never calls
+  // `apply` or updates React state).
+  const lastInjectedSnapshotRef = useRef<ContentSnapshot | null>(null);
+  useEffect((): void => {
+    if (lastInjectedSnapshotRef.current === null) {
+      // Initial snapshot — the connect effect owns the first full inject.
+      lastInjectedSnapshotRef.current = snapshot;
+      return;
+    }
+    if (lastInjectedSnapshotRef.current === snapshot) {
+      return;
+    }
+    lastInjectedSnapshotRef.current = snapshot;
+    inject(snapshot);
+  }, [snapshot, inject]);
+
   const scaledHeight = designHeight * scale;
 
   const canvas = (
@@ -464,7 +538,22 @@ function HostShellCanvas({
 
   const status = renderStatus(connectionState, scale);
 
-  return <>{renderLayout({ canvas, status, children })}</>;
+  const selection = useMemo<HostSelection>(
+    () => ({ selectedTargetId, selectedContentId }),
+    [selectedTargetId, selectedContentId],
+  );
+
+  return (
+    <HostSelectionContext.Provider value={selection}>
+      {renderLayout({
+        canvas,
+        status,
+        children,
+        selectedTargetId,
+        selectedContentId,
+      })}
+    </HostSelectionContext.Provider>
+  );
 }
 
 /* -------------------------------------------------------------------------- */

@@ -54,6 +54,7 @@ export type {
 
 export {
   HostShell,
+  useHostSelection,
   ConnectionStatus,
   DEFAULT_IFRAME_ORIGIN,
   DEFAULT_DESIGN_WIDTH,
@@ -63,6 +64,7 @@ export type {
   HostShellProps,
   HostShellLayoutParts,
   OverlayChromeParts,
+  HostSelection,
   ConnectionStatusProps,
 } from "./shell/index.js";
 
