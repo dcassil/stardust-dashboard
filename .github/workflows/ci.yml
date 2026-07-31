@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,13 +24,16 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: pnpm run typecheck
 
-      - name: Dependency guards (NFR-001 decoupling)
-        run: pnpm run depcruise
+      - name: Lint
+        run: pnpm run lint
 
       - name: Test
         run: pnpm test
 
       - name: Build
         run: pnpm build
+
+      - name: Dependency guards (NFR-001 decoupling)
+        run: pnpm run depcruise
