@@ -71,11 +71,17 @@ export default tseslint.config(
       // Layer definitions. `mode: "full"` matches each file's full path; the
       // barrel `index.ts` of each layer is its public entry (see entry-point).
       "boundaries/elements": [
-        { type: "index", partialMatch: false, pattern: "src/index.ts" },
+        // Folder-based patterns (v7 classifies by folder). The layer folders are
+        // listed FIRST so their files classify to them; `index` is a folder
+        // pattern (`src/**`) placed LAST, so only the root `src/index.ts` barrel
+        // (not under any layer folder) falls through to it. Same effective
+        // classification as the old single-file pattern, without the v7
+        // file-pattern advisory.
         { type: "store", partialMatch: false, pattern: "src/store/**" },
         { type: "blocks", partialMatch: false, pattern: "src/blocks/**" },
         { type: "overlays", partialMatch: false, pattern: "src/overlays/**" },
         { type: "shell", partialMatch: false, pattern: "src/shell/**" },
+        { type: "index", partialMatch: false, pattern: "src/**" },
       ],
     },
     rules: {
