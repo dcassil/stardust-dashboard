@@ -11,7 +11,8 @@
  *    entries, and NOTHING may reach a concrete store / versioned-content-engine.
  *
  * The layer public entries are the `index.ts` barrels; cross-layer imports must
- * resolve to them (boundaries/entry-point). React repo → react-hooks rules on.
+ * resolve to them (enforced by the v7 `boundaries/dependencies` policies via the
+ * `fileInternalPath: "index.ts"` target selector). React repo → react-hooks on.
  */
 
 import js from "@eslint/js";
@@ -108,48 +109,81 @@ export default tseslint.config(
 
       /* ---- MODULE BOUNDARIES ---- */
       "boundaries/no-unknown-dependencies": "error",
-      "boundaries/entry-point": [
-        "error",
-        {
-          default: "disallow",
-          message:
-            "Boundary violation: layer '{{from}}' must import layer '{{to}}' through its public entry (index.ts), not file '{{file}}'.",
-          rules: [
-            // Within a layer, any sibling file may be imported directly.
-            { target: "store", allow: "**" },
-            { target: "blocks", allow: "**" },
-            { target: "overlays", allow: "**" },
-            { target: "shell", allow: "**" },
-            { target: "index", allow: "**" },
-            // Cross-layer, the only importable file is the layer barrel.
-            { target: ["store", "blocks", "overlays", "shell"], allow: "index.ts" },
-          ],
-        },
-      ],
-      "boundaries/element-types": [
+      // v7 `dependencies` replaces the deprecated `element-types` + `entry-point`
+      // rules. Two enforcement concerns are folded into one policy list:
+      //   (a) ALLOWED LAYER EDGES — which layer types may import which (was
+      //       `element-types`). Cross-element imports are evaluated by default;
+      //       same-element sibling imports are skipped automatically (no
+      //       `checkInternals`), so a file may always import its own siblings.
+      //   (b) PUBLIC-ENTRY DISCIPLINE — an allowed cross-layer import must
+      //       resolve to that layer's `index.ts` barrel (was `entry-point`),
+      //       expressed via the `fileInternalPath: "index.ts"` target selector.
+      "boundaries/dependencies": [
         "error",
         {
           default: "disallow",
           message:
             "Boundary violation: '{{from.type}}' may not import '{{to.type}}'. Allowed edges are declared in eslint.config.mjs.",
-          rules: [
-            // The package root barrel wires every layer together.
-            { from: "index", allow: ["store", "blocks", "overlays", "shell"] },
-            // The shell composes the store seam, blocks, and overlays.
-            { from: "shell", allow: ["store", "blocks", "overlays"] },
-            // Overlays + blocks consume only the store seam.
-            { from: "overlays", allow: ["store"] },
-            { from: "blocks", allow: ["store"] },
-            // The store seam (NFR-001) imports no other internal layer.
-            { from: "store", allow: [] },
+          policies: [
+            // The package root barrel wires every layer together — through
+            // each layer's public entry (index.ts).
+            {
+              from: { element: { type: "index" } },
+              allow: {
+                to: {
+                  element: {
+                    types: { anyOf: ["store", "blocks", "overlays", "shell"] },
+                    fileInternalPath: "index.ts",
+                  },
+                },
+              },
+              message:
+                "Boundary violation: the package root barrel '{{from.type}}' must import layer '{{to.type}}' through its public entry (index.ts), not file '{{to.internalPath}}'.",
+            },
+            // The shell composes the store seam, blocks, and overlays — each via
+            // its public entry.
+            {
+              from: { element: { type: "shell" } },
+              allow: {
+                to: {
+                  element: {
+                    types: { anyOf: ["store", "blocks", "overlays"] },
+                    fileInternalPath: "index.ts",
+                  },
+                },
+              },
+              message:
+                "Boundary violation: '{{from.type}}' may import only store/blocks/overlays, and only through their public entry (index.ts), not file '{{to.internalPath}}'.",
+            },
+            // Overlays consume only the store seam, via its public entry.
+            {
+              from: { element: { type: "overlays" } },
+              allow: {
+                to: { element: { type: "store", fileInternalPath: "index.ts" } },
+              },
+              message:
+                "Boundary violation: '{{from.type}}' may import only the store seam, and only through its public entry (index.ts), not file '{{to.internalPath}}'.",
+            },
+            // Blocks consume only the store seam, via its public entry.
+            {
+              from: { element: { type: "blocks" } },
+              allow: {
+                to: { element: { type: "store", fileInternalPath: "index.ts" } },
+              },
+              message:
+                "Boundary violation: '{{from.type}}' may import only the store seam, and only through its public entry (index.ts), not file '{{to.internalPath}}'.",
+            },
+            // The store seam (NFR-001) imports no other internal layer. No allow
+            // policy → any cross-layer import from store hits the default disallow.
           ],
         },
       ],
     },
   },
 
-  // Per-layer entry-point override so a file may import its own siblings freely
-  // (the cross-layer `index.ts`-only rule is enforced by `element-types` above).
+  // Same-element sibling imports are allowed automatically by
+  // `boundaries/dependencies` (internal deps are skipped); the cross-layer
+  // `index.ts`-only rule is enforced by its policies above.
   // NFR-001: forbid any import of a concrete store / VCE anywhere under src.
   {
     files: ["src/**/*.{ts,tsx}"],
@@ -195,8 +229,7 @@ export default tseslint.config(
       "max-lines-per-function": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "max-nested-callbacks": "off",
-      "boundaries/element-types": "off",
-      "boundaries/entry-point": "off",
+      "boundaries/dependencies": "off",
       // Test probes deliberately capture hook return values into module-scope
       // variables / refs and assert on them — patterns the react-hooks correctness
       // rules flag in production code but which are the standard way to test a
