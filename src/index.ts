@@ -29,14 +29,10 @@ export type {
   HostContentOpKind,
   DeleteOp,
   EditOp,
-} from "./store/adapter.js";
-export { dispatchStoreOp } from "./store/adapter.js";
-
-export { StoreProvider, useContentStore } from "./store/StoreProvider.js";
-export type {
   StoreProviderProps,
   ContentStoreContextValue,
-} from "./store/StoreProvider.js";
+} from "./store";
+export { dispatchStoreOp, StoreProvider, useContentStore } from "./store";
 
 // Re-export the host op types that make up HostContentOp so consumers building
 // ops (and the reference VCE adapter in SIFR-T-0032) get the full vocabulary
@@ -59,14 +55,14 @@ export {
   DEFAULT_IFRAME_ORIGIN,
   DEFAULT_DESIGN_WIDTH,
   DEFAULT_DESIGN_HEIGHT,
-} from "./shell/index.js";
+} from "./shell";
 export type {
   HostShellProps,
   HostShellLayoutParts,
   OverlayChromeParts,
   HostSelection,
   ConnectionStatusProps,
-} from "./shell/index.js";
+} from "./shell";
 
 /* -------------------------------------------------------------------------- */
 /* Overlay chrome (SIFR-T-0035)                                               */
@@ -82,12 +78,12 @@ export {
   DEFAULT_SELECTED_ITEM_CLASS_NAME,
   DEFAULT_GROUP_CLASS_NAME,
   DEFAULT_DELETE_CLASS_NAME,
-} from "./overlays/index.js";
+} from "./overlays";
 export type {
   OverlaysProps,
   ItemChromeActions,
   RenderItemChrome,
-} from "./overlays/index.js";
+} from "./overlays";
 
 /* -------------------------------------------------------------------------- */
 /* Block registry (SIFR-T-0034)                                               */
@@ -97,9 +93,7 @@ export type {
   BlockType,
   BlockTypeRegistry,
   BlockFieldPatch,
-} from "./blocks/BlockType.js";
-export { findBlockType } from "./blocks/BlockType.js";
-export { Palette } from "./blocks/Palette.js";
-export type { PaletteProps } from "./blocks/Palette.js";
-export { SidePanel } from "./blocks/SidePanel.js";
-export type { SidePanelProps } from "./blocks/SidePanel.js";
+  PaletteProps,
+  SidePanelProps,
+} from "./blocks";
+export { findBlockType, Palette, SidePanel } from "./blocks";

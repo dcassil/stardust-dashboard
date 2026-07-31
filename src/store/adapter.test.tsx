@@ -68,7 +68,7 @@ function createFakeAdapter(seed: ContentPayload[] = []): {
         case "insert":
           items = [
             ...items,
-            payload(op.targetId, op.index, `new-${op.index}`, String(op.payload.type)),
+            payload(op.targetId, op.index, `new-${String(op.index)}`, op.payload.type),
           ];
           break;
         case "move": {
@@ -196,7 +196,7 @@ function StoreProbe({
 }
 
 describe("StoreProvider + useContentStore injection (TC-002)", () => {
-  afterEach(() => cleanup());
+  afterEach(() => { cleanup(); });
 
   it("seeds the snapshot from the injected adapter", () => {
     const { adapter } = createFakeAdapter([payload("hero", 0, "a", "A")]);
@@ -267,8 +267,12 @@ describe("StoreProvider + useContentStore injection (TC-002)", () => {
 
   it("useContentStore throws when used without a provider", () => {
     // Rendering a probe without a StoreProvider must throw loudly.
-    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    expect(() => render(<StoreProbe onReady={() => {}} />)).toThrow(
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {
+      /* silence expected React error boundary logging */
+    });
+    expect(() =>
+      render(<StoreProbe onReady={() => undefined} />),
+    ).toThrow(
       /StoreProvider/,
     );
     spy.mockRestore();

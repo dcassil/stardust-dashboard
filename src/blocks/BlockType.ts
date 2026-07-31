@@ -20,7 +20,7 @@
 
 import type { ReactNode } from "react";
 import type { CmsContent } from "@stardust-cms/iframe-adapter/protocol";
-import type { EditOp } from "../store/adapter.js";
+import type { EditOp } from "../store";
 
 /**
  * The patch a {@link BlockType.renderField} editor emits. Identical to the

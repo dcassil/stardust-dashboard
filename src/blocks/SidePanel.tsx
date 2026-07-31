@@ -19,8 +19,8 @@
 
 import type { ChangeEvent, ReactNode } from "react";
 import type { CmsContent } from "@stardust-cms/iframe-adapter/protocol";
-import { useContentStore } from "../store/StoreProvider.js";
-import type { ContentSnapshot } from "../store/adapter.js";
+import { useContentStore } from "../store";
+import type { ContentSnapshot } from "../store";
 import type { BlockFieldPatch, BlockTypeRegistry } from "./BlockType.js";
 import { findBlockType } from "./BlockType.js";
 

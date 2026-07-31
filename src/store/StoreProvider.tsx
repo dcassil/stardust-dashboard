@@ -26,7 +26,6 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -46,7 +45,7 @@ export interface ContentStoreContextValue {
    * Apply an op through the adapter, surface the new snapshot, and return it so
    * the caller (the shell) can re-inject it into the iframe.
    */
-  apply(op: HostContentOp): ContentSnapshot;
+  apply: (op: HostContentOp) => ContentSnapshot;
 }
 
 const ContentStoreContext = createContext<ContentStoreContextValue | null>(null);
@@ -70,9 +69,12 @@ export function StoreProvider({
   const [snapshot, setSnapshot] = useState<ContentSnapshot>(() =>
     store.getSnapshot(),
   );
-  const storeRef = useRef<ContentStoreAdapter>(store);
-  if (storeRef.current !== store) {
-    storeRef.current = store;
+  // Track the previously-seen adapter in state (not a ref) so the "adopt a newly
+  // injected store" adjustment happens without reading a ref during render — the
+  // React-recommended "storing information from previous renders" pattern.
+  const [prevStore, setPrevStore] = useState<ContentStoreAdapter>(store);
+  if (prevStore !== store) {
+    setPrevStore(store);
     // A new store was injected; adopt its snapshot on this render.
     setSnapshot(store.getSnapshot());
   }

@@ -112,7 +112,7 @@ describe("SidePanel", () => {
     const snapshot = [payload("t1", "c1", "heading", "Hello")];
     const { ops } = renderPanel(snapshot, "t1", "c1");
 
-    const input = screen.getByTestId("heading-editor") as HTMLInputElement;
+    const input = screen.getByTestId<HTMLInputElement>("heading-editor");
     expect(input.value).toBe("Hello");
 
     fireEvent.change(input, { target: { value: "Hi there" } });
@@ -131,7 +131,7 @@ describe("SidePanel", () => {
     const snapshot = [payload("t1", "g1", "gallery", "seed")];
     const { ops } = renderPanel(snapshot, "t1", "g1");
 
-    const field = screen.getByTestId("panel-default-field") as HTMLTextAreaElement;
+    const field = screen.getByTestId<HTMLTextAreaElement>("panel-default-field");
     expect(field.value).toBe("seed");
 
     fireEvent.change(field, { target: { value: "new" } });

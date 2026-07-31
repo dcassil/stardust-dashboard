@@ -28,198 +28,81 @@
  * host connection) rather than read from a demo-local context, so `Overlays` is
  * a pure presentational wrapper over the primitives.
  *
+ * The `ov-*` class defaults, prop/render types live in `./overlaysTypes.js`; the
+ * default delete-button chrome lives in `./DeleteButton.js`. Both are re-exported
+ * through the `overlays/index.js` barrel so the public API is unchanged.
+ *
  * INVARIANT (NFR-001): imports ONLY the published host primitives/types, React,
  * and the in-package store seam. No concrete store, no `versioned-content-engine`.
  */
 
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useContentStore } from "../store";
+import { defaultRenderItemChrome } from "./DeleteButton.js";
+import { TargetGroup } from "./TargetGroup.js";
 import {
-  TargetAreaOverlay,
-  ContentItemOverlay,
-} from "@stardust-cms/iframe-adapter/host";
-import type {
-  MappedChild,
-  MappedTarget,
-  OperationCallbacks,
-} from "@stardust-cms/iframe-adapter/host";
-import { useContentStore } from "../store/StoreProvider.js";
+  DEFAULT_TARGET_CLASS_NAME,
+  DEFAULT_SELECTED_TARGET_CLASS_NAME,
+  DEFAULT_CONTAINER_TARGET_CLASS_NAME,
+  DEFAULT_TARGET_ITEM_CLASS_NAME,
+  DEFAULT_ITEM_CLASS_NAME,
+  DEFAULT_SELECTED_ITEM_CLASS_NAME,
+  DEFAULT_GROUP_CLASS_NAME,
+  DEFAULT_DELETE_CLASS_NAME,
+} from "./overlaysTypes.js";
+import type { OverlaysProps, RenderItemChrome } from "./overlaysTypes.js";
 
-/* -------------------------------------------------------------------------- */
-/* Default class names (the demo's `ov-*` family, styled by tokens.css)       */
-/* -------------------------------------------------------------------------- */
-
-/** Default class for each mapped `TargetAreaOverlay` drop area. */
-export const DEFAULT_TARGET_CLASS_NAME = "ov-target";
-/** Default class added to a selected target (no item selected within it). */
-export const DEFAULT_SELECTED_TARGET_CLASS_NAME = "ov-target--selected";
-/** Default class added to a container target (nests other targets). */
-export const DEFAULT_CONTAINER_TARGET_CLASS_NAME = "ov-target--container";
-/** Default class for the target's inner item hit-box (the drag source). */
-export const DEFAULT_TARGET_ITEM_CLASS_NAME = "ov-item-hit";
-/** Default class for each selectable `ContentItemOverlay` box. */
-export const DEFAULT_ITEM_CLASS_NAME = "ov-item";
-/** Default class added to the selected `ContentItemOverlay`. */
-export const DEFAULT_SELECTED_ITEM_CLASS_NAME = "ov-item--selected";
-/** Default class for the per-target chrome group wrapper. */
-export const DEFAULT_GROUP_CLASS_NAME = "ov-group";
-/** Default class for the built-in delete button. */
-export const DEFAULT_DELETE_CLASS_NAME = "ov-delete";
-
-/* -------------------------------------------------------------------------- */
-/* Item chrome render-prop                                                    */
-/* -------------------------------------------------------------------------- */
-
-/** Actions handed to a custom {@link OverlaysProps.renderItemChrome}. */
-export interface ItemChromeActions {
-  /** Dispatch a store {@link DeleteOp} for this item (target + content id). */
-  onDelete: () => void;
+/** The overlay class names with every default applied. */
+interface ResolvedClassNames {
+  groupClassName: string;
+  targetClassName: string;
+  selectedTargetClassName: string;
+  containerTargetClassName: string;
+  targetItemClassName: string;
+  itemClassName: string;
+  selectedItemClassName: string;
+  deleteClassName: string;
 }
 
-/**
- * Render the chrome for a single content item (delete/duplicate/handle …),
- * given the mapped child and the store-wired actions. Return `null` to render no
- * chrome for an item.
- */
-export type RenderItemChrome = (
-  child: MappedChild,
-  targetId: string,
-  actions: ItemChromeActions,
-) => ReactNode;
-
-/* -------------------------------------------------------------------------- */
-/* Default delete-button chrome                                               */
-/* -------------------------------------------------------------------------- */
-
-interface DeleteButtonProps {
-  child: MappedChild;
-  onDelete: () => void;
-  className: string;
+/** Apply the `ov-*` defaults to every optional class-name prop. */
+function resolveClassNames(props: OverlaysProps): ResolvedClassNames {
+  return {
+    groupClassName: props.groupClassName ?? DEFAULT_GROUP_CLASS_NAME,
+    targetClassName: props.targetClassName ?? DEFAULT_TARGET_CLASS_NAME,
+    selectedTargetClassName:
+      props.selectedTargetClassName ?? DEFAULT_SELECTED_TARGET_CLASS_NAME,
+    containerTargetClassName:
+      props.containerTargetClassName ?? DEFAULT_CONTAINER_TARGET_CLASS_NAME,
+    targetItemClassName:
+      props.targetItemClassName ?? DEFAULT_TARGET_ITEM_CLASS_NAME,
+    itemClassName: props.itemClassName ?? DEFAULT_ITEM_CLASS_NAME,
+    selectedItemClassName:
+      props.selectedItemClassName ?? DEFAULT_SELECTED_ITEM_CLASS_NAME,
+    deleteClassName: props.deleteClassName ?? DEFAULT_DELETE_CLASS_NAME,
+  };
 }
 
-/**
- * The default per-item chrome: a small delete affordance positioned at the
- * item's top-right, ported from the demo's `DeleteButton`. Dispatches through
- * the store via the injected `onDelete` action (so the store `DeleteOp` path is
- * preserved even when a consumer keeps the default).
- */
-function DeleteButton({
-  child,
-  onDelete,
-  className,
-}: DeleteButtonProps): ReactNode {
-  const { geometry } = child;
-  return (
-    <button
-      type="button"
-      className={className}
-      title="Delete block"
-      style={{
-        top: geometry.top + 4,
-        left: geometry.left + geometry.width - 26,
-      }}
-      onClick={(event) => {
-        event.stopPropagation();
-        onDelete();
-      }}
-    >
-      ×
-    </button>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Overlays                                                                    */
-/* -------------------------------------------------------------------------- */
-
-export interface OverlaysProps {
-  /**
-   * Targets mapped into host coordinates — from `useStardustHost().targets`.
-   * The shell owns the single host connection and passes them down.
-   */
-  targets: MappedTarget[];
-  /**
-   * The edit-intent callbacks bundled by `useStardustHost` — spread onto the
-   * `TargetAreaOverlay`s so drag/drop still emits insert/move ops through the
-   * host. Selection is handled here (through the store) but any `onSelect` in
-   * `callbacks` is still honored for the target hit-box.
-   */
-  callbacks: OperationCallbacks;
-
-  /** The currently selected content id (drives the item `selected` class). */
-  selectedContentId?: string | null;
-  /** The currently selected target id (drives the target `selected` class). */
-  selectedTargetId?: string | null;
-
-  /** Override the per-target group wrapper class. */
-  groupClassName?: string;
-  /** Override the target drop-area class. */
-  targetClassName?: string;
-  /** Override the selected-target class. */
-  selectedTargetClassName?: string;
-  /** Override the container-target class. */
-  containerTargetClassName?: string;
-  /** Override the target inner item hit-box class. */
-  targetItemClassName?: string;
-  /** Override the content-item box class. */
-  itemClassName?: string;
-  /** Override the selected content-item class. */
-  selectedItemClassName?: string;
-  /** Override the default delete-button class. */
-  deleteClassName?: string;
-  /** Extra style merged onto each target box. */
-  targetStyle?: CSSProperties;
-  /** Extra style merged onto each content-item box. */
-  itemStyle?: CSSProperties;
-
-  /**
-   * Replace the per-item chrome. Default: a delete button that dispatches a
-   * store {@link DeleteOp}. A custom render still receives `onDelete`, so a
-   * consumer's control can route delete through the store without forking.
-   */
-  renderItemChrome?: RenderItemChrome;
-  /**
-   * When no `renderItemChrome` is provided, whether to render the default
-   * delete button. Set `false` to render selectable items with no chrome.
-   * @default true
-   */
-  showDeleteButton?: boolean;
-}
-
-/**
- * The default per-item chrome factory: the bundled delete button, store-wired.
- * Extracted so it is the single fallback both when `renderItemChrome` is omitted
- * and (implicitly) the documented default a consumer overrides.
- */
-function defaultRenderItemChrome(
-  deleteClassName: string,
-): RenderItemChrome {
-  return (child, _targetId, actions): ReactNode => (
-    <DeleteButton
-      child={child}
-      onDelete={actions.onDelete}
-      className={deleteClassName}
-    />
-  );
-}
-
-export function Overlays({
-  targets,
-  callbacks,
-  selectedContentId = null,
-  selectedTargetId = null,
-  groupClassName = DEFAULT_GROUP_CLASS_NAME,
-  targetClassName = DEFAULT_TARGET_CLASS_NAME,
-  selectedTargetClassName = DEFAULT_SELECTED_TARGET_CLASS_NAME,
-  containerTargetClassName = DEFAULT_CONTAINER_TARGET_CLASS_NAME,
-  targetItemClassName = DEFAULT_TARGET_ITEM_CLASS_NAME,
-  itemClassName = DEFAULT_ITEM_CLASS_NAME,
-  selectedItemClassName = DEFAULT_SELECTED_ITEM_CLASS_NAME,
-  deleteClassName = DEFAULT_DELETE_CLASS_NAME,
-  targetStyle,
-  itemStyle,
-  renderItemChrome,
-  showDeleteButton = true,
-}: OverlaysProps): ReactNode {
+export function Overlays(props: OverlaysProps): ReactNode {
+  const {
+    targets,
+    callbacks,
+    selectedContentId = null,
+    selectedTargetId = null,
+    targetStyle,
+    itemStyle,
+    renderItemChrome,
+    showDeleteButton = true,
+  } = props;
+  const {
+    groupClassName,
+    targetClassName,
+    selectedTargetClassName,
+    containerTargetClassName,
+    targetItemClassName,
+    itemClassName,
+    selectedItemClassName,
+    deleteClassName,
+  } = resolveClassNames(props);
   const { apply } = useContentStore();
 
   // Selection routes through the store as a SelectOp (adapters treat it as a
@@ -239,61 +122,33 @@ export function Overlays({
     apply({ kind: "delete", targetId, contentId });
   };
 
-  const resolvedChrome: RenderItemChrome | null = renderItemChrome
-    ? renderItemChrome
-    : showDeleteButton
-      ? defaultRenderItemChrome(deleteClassName)
-      : null;
+  const chrome: RenderItemChrome | null =
+    renderItemChrome ??
+    (showDeleteButton ? defaultRenderItemChrome(deleteClassName) : null);
 
   return (
     <>
-      {targets.map((target: MappedTarget) => {
-        const targetSelected =
-          selectedTargetId === target.targetId && selectedContentId === null;
-        const targetClasses = [
-          targetClassName,
-          targetSelected ? selectedTargetClassName : "",
-          target.isContainer ? containerTargetClassName : "",
-        ]
-          .filter(Boolean)
-          .join(" ");
-
-        return (
-          <div key={target.targetId} className={groupClassName}>
-            <TargetAreaOverlay
-              target={target}
-              {...callbacks}
-              className={targetClasses}
-              itemClassName={targetItemClassName}
-              {...(targetStyle ? { style: targetStyle } : {})}
-            />
-            {target.children.map((child) => {
-              const isSelected = child.contentId === selectedContentId;
-              const itemClasses = [
-                itemClassName,
-                isSelected ? selectedItemClassName : "",
-              ]
-                .filter(Boolean)
-                .join(" ");
-              return (
-                <div key={`chrome-${child.contentId}`}>
-                  <ContentItemOverlay
-                    targetId={target.targetId}
-                    child={child}
-                    index={child.index}
-                    onSelect={selectItem}
-                    className={itemClasses}
-                    {...(itemStyle ? { style: itemStyle } : {})}
-                  />
-                  {resolvedChrome?.(child, target.targetId, {
-                    onDelete: () => deleteItem(target.targetId, child.contentId),
-                  })}
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+      {targets.map((target) => (
+        <TargetGroup
+          key={target.targetId}
+          target={target}
+          callbacks={callbacks}
+          selectedContentId={selectedContentId}
+          selectedTargetId={selectedTargetId}
+          groupClassName={groupClassName}
+          targetClassName={targetClassName}
+          selectedTargetClassName={selectedTargetClassName}
+          containerTargetClassName={containerTargetClassName}
+          targetItemClassName={targetItemClassName}
+          itemClassName={itemClassName}
+          selectedItemClassName={selectedItemClassName}
+          targetStyle={targetStyle}
+          itemStyle={itemStyle}
+          chrome={chrome}
+          onSelectItem={selectItem}
+          onDeleteItem={deleteItem}
+        />
+      ))}
     </>
   );
 }

@@ -83,7 +83,7 @@ vi.mock("frame-link-react", () => ({
 
 // Import AFTER mocks are registered.
 const { HostShell } = await import("./HostShell.js");
-const { DEFAULT_DESIGN_WIDTH } = await import("./HostShell.js");
+const { DEFAULT_DESIGN_WIDTH } = await import(".");
 
 /* -------------------------------------------------------------------------- */
 /* Fake ContentStoreAdapter                                                   */
@@ -111,7 +111,7 @@ function createFakeAdapter(seed: ContentPayload[] = []): {
       if (op.kind === "insert") {
         items = [
           ...items,
-          payload(op.targetId, op.index, `new-${items.length}`, "inserted"),
+          payload(op.targetId, op.index, `new-${String(items.length)}`, "inserted"),
         ];
       } else if (op.kind === "delete") {
         items = items.filter(
@@ -469,7 +469,7 @@ describe("HostShell re-injects on snapshot change (B1)", () => {
 /* B2: shell-tracked selection exposed to renderLayout + useHostSelection      */
 /* -------------------------------------------------------------------------- */
 
-const { useHostSelection } = await import("./HostShell.js");
+const { useHostSelection } = await import(".");
 
 describe("HostShell exposes tracked selection (B2)", () => {
   it("passes selectedTargetId/selectedContentId to renderLayout", () => {
