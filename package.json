@@ -1,6 +1,6 @@
 {
   "name": "@stardust-cms/dashboard",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Extensible host dashboard boilerplate for in-iframe visual editors built on @stardust-cms/iframe-adapter.",
   "type": "module",
   "license": "MIT",
@@ -43,7 +43,7 @@
     "prepare": "husky"
   },
   "peerDependencies": {
-    "@stardust-cms/iframe-adapter": "^0.1.0",
+    "@stardust-cms/iframe-adapter": "^0.1.6",
     "frame-link": "^4.0.0",
     "frame-link-react": "^4.0.0",
     "react": ">=18"
@@ -51,7 +51,7 @@
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "^4.7.2",
     "@eslint/js": "^10.0.1",
-    "@stardust-cms/iframe-adapter": "^0.1.0",
+    "@stardust-cms/iframe-adapter": "^0.1.6",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.0",
     "@types/react": "^18.3.0",
