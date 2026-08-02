@@ -17,11 +17,12 @@
  */
 
 import { cleanup, fireEvent, render } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import type {
-  MappedChild,
-  MappedTarget,
+import {
+  DATA_TRANSFER_KEYS,
+  type MappedChild,
+  type MappedTarget,
 } from "@stardust-cms/iframe-adapter/host";
 import { StoreProvider } from "../store/StoreProvider.js";
 import type {
@@ -187,6 +188,58 @@ describe("Overlays class-name overrides", () => {
     const selected = container.querySelectorAll(".is-selected");
     expect(selected).toHaveLength(1);
     expect(selected[0]!.getAttribute("data-content-id")).toBe("c2");
+  });
+});
+
+describe("Overlays read-only (editable=false)", () => {
+  it("renders no delete button and does not dispatch select on item click", () => {
+    const { ops, container } = renderOverlays(
+      <Overlays targets={TARGETS} callbacks={NO_CALLBACKS} editable={false} />,
+    );
+
+    // No delete chrome at all.
+    expect(container.querySelectorAll(".ov-delete")).toHaveLength(0);
+
+    // The geometry boxes still render (read-only viewing is unaffected)...
+    const item = container.querySelector<HTMLElement>(
+      '.ov-item[data-content-id="c1"]',
+    );
+    expect(item).not.toBeNull();
+
+    // ...but clicking one is inert — no SelectOp reaches the store.
+    fireEvent.click(item!);
+    expect(ops).toEqual([]);
+  });
+
+  it("does not wire host callbacks into the target drop area (drops inert)", () => {
+    const onInsert = vi.fn();
+    const onMove = vi.fn();
+    const onSelect = vi.fn();
+    const { container } = renderOverlays(
+      <Overlays
+        targets={TARGETS}
+        callbacks={{ onInsert, onMove, onSelect }}
+        editable={false}
+      />,
+    );
+
+    // Drop an insert payload on the target area; with callbacks stripped the
+    // primitive's dispatch resolves to a no-op.
+    const targetBox = container.querySelector<HTMLElement>(
+      '[data-target-id="t1"]',
+    );
+    expect(targetBox).not.toBeNull();
+    const dataTransfer = {
+      getData: (key: string) =>
+        key === DATA_TRANSFER_KEYS.type ? "text" : "",
+    } as unknown as DataTransfer;
+    fireEvent.drop(targetBox!, { dataTransfer });
+
+    expect(onInsert).not.toHaveBeenCalled();
+    expect(onMove).not.toHaveBeenCalled();
+    // Target hit-box select is inert too.
+    fireEvent.click(targetBox!);
+    expect(onSelect).not.toHaveBeenCalled();
   });
 });
 

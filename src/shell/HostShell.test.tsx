@@ -297,6 +297,76 @@ describe("HostShell op → store → cms/sendElements injection", () => {
     expect(injectedNew?.targetId).toBe("t1");
   });
 
+  it("auto-selects the newly-inserted item so useHostSelection activates for it", () => {
+    const { adapter } = createFakeAdapter([payload("t1", 0, "seed", "hello")]);
+    let seen: {
+      selectedTargetId: string | null;
+      selectedContentId: string | null;
+    } = { selectedTargetId: null, selectedContentId: null };
+    function SelectionReader(): null {
+      seen = useHostSelection();
+      return null;
+    }
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        blockTypes={[{ type: "text", label: "Text" }]}
+      >
+        <SelectionReader />
+      </HostShell>,
+    );
+
+    // Nothing selected before the insert.
+    expect(seen).toEqual({ selectedTargetId: null, selectedContentId: null });
+
+    // Insert a new item at (t1, 1). The fake adapter mints it with
+    // content.id === "new-1" (items.length was 1 at insert time).
+    act(() => {
+      hostState.lastOptions?.onInsert?.("t1", 1, { type: "text" });
+    });
+
+    // The new item's id became the selection — the Edit/Style panels activate.
+    expect(seen).toEqual({
+      selectedTargetId: "t1",
+      selectedContentId: "new-1",
+    });
+  });
+
+  it("leaves selection unchanged when the inserted item is not found in the snapshot", () => {
+    // An adapter whose insert does NOT place an item at (targetId, index) — the
+    // auto-select must no-op rather than throw or select something stale.
+    let items: ContentPayload[] = [];
+    const adapter: ContentStoreAdapter = {
+      getSnapshot: (): ContentSnapshot => [...items],
+      apply: (op: HostContentOp): ContentSnapshot => {
+        // insert appends at a DIFFERENT index than requested.
+        if (op.kind === "insert") {
+          items = [...items, payload("other", 99, "x", "x")];
+        }
+        return [...items];
+      },
+    };
+    let seen: {
+      selectedTargetId: string | null;
+      selectedContentId: string | null;
+    } = { selectedTargetId: null, selectedContentId: null };
+    function SelectionReader(): null {
+      seen = useHostSelection();
+      return null;
+    }
+    render(
+      <HostShell store={adapter} iframeOrigin="http://o.test:1">
+        <SelectionReader />
+      </HostShell>,
+    );
+    act(() => {
+      hostState.lastOptions?.onInsert?.("t1", 0, { type: "text" });
+    });
+    // No matching item at (t1, 0) → selection stays null.
+    expect(seen).toEqual({ selectedTargetId: null, selectedContentId: null });
+  });
+
   it("seeds no insert default value when blockTypes is omitted (empty registry)", () => {
     const { adapter, received } = createFakeAdapter();
     render(<HostShell store={adapter} iframeOrigin="http://o.test:1" />);

@@ -74,6 +74,7 @@ export function HostShell(props: HostShellProps): ReactNode {
     designHeight = DEFAULT_DESIGN_HEIGHT,
     headerOffset = 0,
     store,
+    editable = true,
     blockTypes = EMPTY_BLOCK_TYPES,
     renderStatus,
     renderLayout = defaultRenderLayout,
@@ -115,6 +116,7 @@ export function HostShell(props: HostShellProps): ReactNode {
             designWidth={designWidth}
             designHeight={designHeight}
             headerOffset={headerOffset}
+            editable={editable}
             blockTypes={blockTypes}
             renderStatus={resolvedRenderStatus}
             renderLayout={renderLayout}

@@ -47,6 +47,13 @@ export interface OverlayChromeParts {
   selectedTargetId: string | null;
   /** The shell-tracked selected content id (drives the item selected ring). */
   selectedContentId: string | null;
+  /**
+   * Whether editing chrome is active. Forwarded from {@link HostShellProps.editable}
+   * so a custom `renderOverlayChrome` can strip its own editing affordances for a
+   * read-only view. The bundled {@link Overlays} default consumes it as its
+   * `editable` prop. `true` unless `HostShell editable={false}`.
+   */
+  editable: boolean;
 }
 
 /** The composed regions handed to a custom {@link HostShellProps.renderLayout}. */
@@ -113,6 +120,18 @@ export interface HostShellProps {
   headerOffset?: number;
   /** The injected content store. The ONLY place a concrete store enters. */
   store: ContentStoreAdapter;
+  /**
+   * Whether the editor is interactive. Default `true`. Set `false` when the
+   * consumer is viewing a published/historical read-only version: the overlay
+   * editing affordances (selection ring interaction, delete button, drag-and-drop
+   * insertion) are disabled and the bundled block {@link Palette} renders a
+   * disabled, non-draggable state. Read-only VIEWING (geometry boxes, presence)
+   * is unaffected. Forwarded to the overlay chrome via
+   * {@link OverlayChromeParts.editable} and to any bundled palette rendered as
+   * `children`.
+   * @default true
+   */
+  editable?: boolean;
   /**
    * The block-type registry (SIFR-T-0034, REQ-004). Drives per-type insert
    * defaults (via each block's `defaultValue()`) and, when the bundled

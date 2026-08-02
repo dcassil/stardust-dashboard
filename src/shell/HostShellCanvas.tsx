@@ -34,6 +34,7 @@ export interface HostShellCanvasProps {
   designWidth: number;
   designHeight: number;
   headerOffset: number;
+  editable: boolean;
   blockTypes: BlockTypeRegistry;
   renderStatus: (state: ConnectionState, scale: number) => ReactNode;
   renderLayout: (parts: HostShellLayoutParts) => ReactNode;
@@ -47,6 +48,7 @@ export function HostShellCanvas({
   designWidth,
   designHeight,
   headerOffset,
+  editable,
   blockTypes,
   renderStatus,
   renderLayout,
@@ -85,6 +87,7 @@ export function HostShellCanvas({
     scale,
     selectedTargetId,
     selectedContentId,
+    editable,
   });
 
   const canvas = (

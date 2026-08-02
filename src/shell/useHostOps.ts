@@ -17,7 +17,7 @@ import type {
   InsertOp,
   OperationCallbacks,
 } from "@stardust-cms/iframe-adapter/host";
-import type { HostContentOp } from "../store";
+import type { ContentSnapshot, HostContentOp } from "../store";
 import type { BlockTypeRegistry } from "../blocks";
 import { applyInsertDefaults } from "./injectPipeline.js";
 
@@ -37,7 +37,7 @@ export interface HostOps {
  * through the single `apply` entry point; the local mirror only drives visuals.
  */
 export function useHostOps(
-  apply: (op: HostContentOp) => unknown,
+  apply: (op: HostContentOp) => ContentSnapshot,
   blockTypes: BlockTypeRegistry,
 ): HostOps {
   const [selectedTargetId, setSelectedTargetId] = useState<string | null>(null);
@@ -46,29 +46,8 @@ export function useHostOps(
   );
 
   const dispatch = useCallback(
-    (op: HostContentOp): void => {
-      apply(op);
-    },
+    (op: HostContentOp): ContentSnapshot => apply(op),
     [apply],
-  );
-
-  const onInsert = useCallback(
-    (targetId: string, index: number, payload: InsertOp["payload"]): void => {
-      dispatch({
-        kind: "insert",
-        targetId,
-        index,
-        payload: applyInsertDefaults(blockTypes, payload),
-      });
-    },
-    [dispatch, blockTypes],
-  );
-
-  const onMove = useCallback(
-    (from: ContentLocation, to: ContentLocation): void => {
-      dispatch({ kind: "move", from, to });
-    },
-    [dispatch],
   );
 
   const onSelect = useCallback(
@@ -80,6 +59,37 @@ export function useHostOps(
           ? { kind: "select", targetId, contentId }
           : { kind: "select", targetId },
       );
+    },
+    [dispatch],
+  );
+
+  const onInsert = useCallback(
+    (targetId: string, index: number, payload: InsertOp["payload"]): void => {
+      // Apply the insert and use the returned snapshot to auto-select the
+      // newly-inserted item so the consumer's Edit/Style panels (which read
+      // `useHostSelection()`) activate immediately for the new block. The store
+      // returns the fresh snapshot from `apply`; the new item is the payload now
+      // sitting at (targetId, index). If it can't be found (e.g. a store that
+      // reorders or rejects), we no-op the selection.
+      const snapshot = dispatch({
+        kind: "insert",
+        targetId,
+        index,
+        payload: applyInsertDefaults(blockTypes, payload),
+      });
+      const inserted = snapshot.find(
+        (item) => item.targetId === targetId && item.index === index,
+      );
+      if (inserted !== undefined) {
+        onSelect(inserted.targetId, inserted.content.id);
+      }
+    },
+    [dispatch, blockTypes, onSelect],
+  );
+
+  const onMove = useCallback(
+    (from: ContentLocation, to: ContentLocation): void => {
+      dispatch({ kind: "move", from, to });
     },
     [dispatch],
   );
