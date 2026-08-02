@@ -62,7 +62,7 @@ export function HostShellCanvas({
   const { operationCallbacks, selectedTargetId, selectedContentId } =
     useHostOps(apply, blockTypes);
 
-  const { scale, connectionState, targets, callbacks } = useStardustHost(
+  const { scale, connectionState, targets, callbacks, pointer } = useStardustHost(
     iframeRef,
     {
       origin: iframeOrigin,
@@ -85,6 +85,7 @@ export function HostShellCanvas({
     targets,
     callbacks,
     scale,
+    pointer,
     selectedTargetId,
     selectedContentId,
     editable,

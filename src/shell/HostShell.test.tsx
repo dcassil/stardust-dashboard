@@ -19,6 +19,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import type {
   ConnectionState,
+  HostPointer,
   UseStardustHostOptions,
   UseStardustHostResult,
 } from "@stardust-cms/iframe-adapter/host";
@@ -28,6 +29,7 @@ import type {
   ContentStoreAdapter,
   HostContentOp,
 } from "../store/adapter.js";
+import type { OverlayChromeParts } from "./hostShellTypes.js";
 
 /* -------------------------------------------------------------------------- */
 /* Mocks                                                                      */
@@ -40,7 +42,13 @@ const hostState: {
   lastOptions: UseStardustHostOptions | null;
   connectionState: ConnectionState;
   scale: number;
-} = { lastOptions: null, connectionState: "connected", scale: 0.5 };
+  pointer: HostPointer;
+} = {
+  lastOptions: null,
+  connectionState: "connected",
+  scale: 0.5,
+  pointer: null,
+};
 
 vi.mock("@stardust-cms/iframe-adapter/host", () => ({
   useStardustHost: (
@@ -51,6 +59,7 @@ vi.mock("@stardust-cms/iframe-adapter/host", () => ({
     return {
       targets: [],
       scale: hostState.scale,
+      pointer: hostState.pointer,
       connectionState: hostState.connectionState,
       callbacks: {
         ...(options.onInsert ? { onInsert: options.onInsert } : {}),
@@ -146,6 +155,7 @@ beforeEach(() => {
   hostState.lastOptions = null;
   hostState.connectionState = "connected";
   hostState.scale = 0.5;
+  hostState.pointer = null;
   sent.length = 0;
 });
 
@@ -540,6 +550,48 @@ describe("HostShell re-injects on snapshot change (B1)", () => {
 /* -------------------------------------------------------------------------- */
 
 const { useHostSelection } = await import(".");
+
+/* -------------------------------------------------------------------------- */
+/* Pointer forwarding to renderOverlayChrome (SIFR-I-0007)                     */
+/* -------------------------------------------------------------------------- */
+
+describe("HostShell forwards pointer to renderOverlayChrome", () => {
+  it("passes useStardustHost().pointer verbatim (normalized 0..1) into OverlayChromeParts.pointer", () => {
+    // The iframe streamed a normalized pointer; the shell forwards it unchanged.
+    hostState.pointer = { x: 0.25, y: 0.75 };
+    const { adapter } = createFakeAdapter();
+    let seen: OverlayChromeParts["pointer"] | "unset" = "unset";
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        renderOverlayChrome={(parts) => {
+          seen = parts.pointer;
+          return <div data-testid="chrome" />;
+        }}
+      />,
+    );
+    // Forwarded verbatim — NOT premultiplied by scale (transform-neutral).
+    expect(seen).toEqual({ x: 0.25, y: 0.75 });
+  });
+
+  it("forwards null when the pointer is not over the iframe", () => {
+    hostState.pointer = null;
+    const { adapter } = createFakeAdapter();
+    let seen: OverlayChromeParts["pointer"] | "unset" = "unset";
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        renderOverlayChrome={(parts) => {
+          seen = parts.pointer;
+          return <div data-testid="chrome" />;
+        }}
+      />,
+    );
+    expect(seen).toBeNull();
+  });
+});
 
 describe("HostShell exposes tracked selection (B2)", () => {
   it("passes selectedTargetId/selectedContentId to renderLayout", () => {

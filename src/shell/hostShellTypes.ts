@@ -8,6 +8,7 @@
 import type { ReactNode } from "react";
 import type {
   ConnectionState,
+  HostPointer,
   MappedTarget,
   OperationCallbacks,
 } from "@stardust-cms/iframe-adapter/host";
@@ -43,6 +44,20 @@ export interface OverlayChromeParts {
   callbacks: OperationCallbacks;
   /** Current iframe render scale. */
   scale: number;
+  /**
+   * The local user's latest pointer position over the iframe, forwarded verbatim
+   * from `useStardustHost().pointer` (SIFR-I-0007), or `null` when the pointer is
+   * not over the iframe. Lets a custom `renderOverlayChrome` draw the local
+   * user's collaboration cursor over the scaled canvas.
+   *
+   * COORDINATE CONTRACT: `x`/`y` are NORMALIZED `0..1` of the iframe's
+   * design/viewport space — transform-neutral (NOT premultiplied by `scale` or
+   * scroll). The dashboard forwards these SAME normalized values; the consumer
+   * (e.g. the demo) multiplies them by its own stage/canvas box to place the
+   * cursor. `null` unless the embedded iframe opts in to pointer streaming
+   * (`StardustAdapterProvider publishPointer`).
+   */
+  pointer: HostPointer;
   /** The shell-tracked selected target id (drives the target selected ring). */
   selectedTargetId: string | null;
   /** The shell-tracked selected content id (drives the item selected ring). */
