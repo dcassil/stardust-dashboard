@@ -39,6 +39,22 @@ describe("Palette", () => {
     expect(screen.queryAllByTestId(/^palette-item-/)).toHaveLength(0);
   });
 
+  it("renders a disabled, non-draggable state and sets no drag payload when editable=false", () => {
+    render(<Palette blockTypes={registry} editable={false} />);
+    const item = screen.getByTestId("palette-item-gallery");
+
+    // Disabled affordances.
+    expect(item.getAttribute("draggable")).toBe("false");
+    expect(item.getAttribute("aria-disabled")).toBe("true");
+    expect(item.className).toContain("palette__item--disabled");
+
+    // Drag start (if a browser still emits it) sets no payload.
+    const setData = vi.fn();
+    const dataTransfer = { setData, effectAllowed: "" } as unknown as DataTransfer;
+    fireEvent.dragStart(item, { dataTransfer });
+    expect(setData).not.toHaveBeenCalled();
+  });
+
   it("sets DATA_TRANSFER_KEYS.type to the block type on drag start", () => {
     render(<Palette blockTypes={registry} />);
     const item = screen.getByTestId("palette-item-gallery");

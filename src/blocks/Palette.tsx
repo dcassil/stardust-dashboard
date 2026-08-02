@@ -18,16 +18,31 @@ import type { BlockType, BlockTypeRegistry } from "./BlockType.js";
 export interface PaletteProps {
   /** The block-type registry to render. An empty registry renders no entries. */
   blockTypes: BlockTypeRegistry;
+  /**
+   * Whether palette entries can be dragged to insert new blocks. Set `false` for
+   * a read-only view: entries render in a disabled state (`draggable={false}`,
+   * `aria-disabled`, `palette__item--disabled` class) and drag start is a no-op,
+   * so no insert can be initiated. `HostShell editable={false}` drives this.
+   * @default true
+   */
+  editable?: boolean;
 }
 
 /**
  * The draggable block palette. Iterates `blockTypes` 1:1 (TC-001) and advertises
- * each block's `type` on drag; the library owns the drop → op translation.
+ * each block's `type` on drag; the library owns the drop → op translation. When
+ * `editable` is `false` the entries are rendered disabled and non-draggable.
  */
-export function Palette({ blockTypes }: PaletteProps): ReactNode {
+export function Palette({ blockTypes, editable = true }: PaletteProps): ReactNode {
   const handleDragStart =
     (block: BlockType) =>
     (event: DragEvent<HTMLDivElement>): void => {
+      if (!editable) {
+        // Belt-and-braces: with draggable={false} this shouldn't fire, but keep
+        // the payload from being set if a browser still emits the event.
+        event.preventDefault();
+        return;
+      }
       event.dataTransfer.setData(DATA_TRANSFER_KEYS.type, block.type);
       event.dataTransfer.effectAllowed = "copy";
     };
@@ -36,14 +51,21 @@ export function Palette({ blockTypes }: PaletteProps): ReactNode {
     <section className="panel">
       <h2 className="panel__title">Blocks</h2>
       <p className="panel__hint">
-        Drag a block onto any target (including a container column).
+        {editable
+          ? "Drag a block onto any target (including a container column)."
+          : "Editing is disabled for this read-only view."}
       </p>
       <div className="palette">
         {blockTypes.map((block) => (
           <div
             key={block.type}
-            className="palette__item"
-            draggable
+            className={
+              editable
+                ? "palette__item"
+                : "palette__item palette__item--disabled"
+            }
+            draggable={editable}
+            aria-disabled={editable ? undefined : true}
             onDragStart={handleDragStart(block)}
             data-block-type={block.type}
             data-testid={`palette-item-${block.type}`}

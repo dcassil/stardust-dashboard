@@ -37,6 +37,7 @@
  */
 
 import type { ReactNode } from "react";
+import type { OperationCallbacks } from "@stardust-cms/iframe-adapter/host";
 import { useContentStore } from "../store";
 import { defaultRenderItemChrome } from "./DeleteButton.js";
 import { TargetGroup } from "./TargetGroup.js";
@@ -92,6 +93,7 @@ export function Overlays(props: OverlaysProps): ReactNode {
     itemStyle,
     renderItemChrome,
     showDeleteButton = true,
+    editable = true,
   } = props;
   const {
     groupClassName,
@@ -122,9 +124,23 @@ export function Overlays(props: OverlaysProps): ReactNode {
     apply({ kind: "delete", targetId, contentId });
   };
 
-  const chrome: RenderItemChrome | null =
-    renderItemChrome ??
-    (showDeleteButton ? defaultRenderItemChrome(deleteClassName) : null);
+  // Read-only mode: render the geometry boxes (so a published/historical version
+  // is still viewable) but strip every editing affordance —
+  //  - no delete chrome (`chrome` is null regardless of showDeleteButton),
+  //  - no interactive selection ring (item click is inert),
+  //  - the primitives receive NO onInsert/onMove/onSelect callbacks, so their
+  //    drop handlers resolve to no-ops (drop zones inert) and the target
+  //    hit-box select does nothing.
+  const chrome: RenderItemChrome | null = editable
+    ? (renderItemChrome ??
+      (showDeleteButton ? defaultRenderItemChrome(deleteClassName) : null))
+    : null;
+
+  const resolvedCallbacks: OperationCallbacks = editable ? callbacks : {};
+  // Inert handlers for read-only mode (TargetGroup requires both callbacks).
+  const noop = (): void => {
+    return;
+  };
 
   return (
     <>
@@ -132,7 +148,7 @@ export function Overlays(props: OverlaysProps): ReactNode {
         <TargetGroup
           key={target.targetId}
           target={target}
-          callbacks={callbacks}
+          callbacks={resolvedCallbacks}
           selectedContentId={selectedContentId}
           selectedTargetId={selectedTargetId}
           groupClassName={groupClassName}
@@ -145,8 +161,8 @@ export function Overlays(props: OverlaysProps): ReactNode {
           targetStyle={targetStyle}
           itemStyle={itemStyle}
           chrome={chrome}
-          onSelectItem={selectItem}
-          onDeleteItem={deleteItem}
+          onSelectItem={editable ? selectItem : noop}
+          onDeleteItem={editable ? deleteItem : noop}
         />
       ))}
     </>

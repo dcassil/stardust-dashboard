@@ -18,6 +18,7 @@ export function defaultRenderOverlayChrome({
   callbacks,
   selectedTargetId,
   selectedContentId,
+  editable,
 }: OverlayChromeParts): ReactNode {
   return (
     <Overlays
@@ -25,6 +26,7 @@ export function defaultRenderOverlayChrome({
       callbacks={callbacks}
       selectedTargetId={selectedTargetId}
       selectedContentId={selectedContentId}
+      editable={editable}
     />
   );
 }

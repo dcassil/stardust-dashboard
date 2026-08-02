@@ -102,4 +102,18 @@ export interface OverlaysProps {
    * @default true
    */
   showDeleteButton?: boolean;
+
+  /**
+   * Whether the overlay chrome is interactive (selection ring, delete button,
+   * drag-and-drop insertion). Set `false` for a read-only view of a
+   * published/historical version: NO delete chrome is rendered, item selection
+   * is inert, and the insert/move/select drop handlers are NOT wired to the
+   * primitives (drops become no-ops). Presence/read-only viewing is unaffected —
+   * the boxes still render so geometry stays visible.
+   *
+   * `HostShell editable={false}` drives this. When `editable` is omitted here it
+   * defaults to `true` (fully interactive), preserving the prior behavior.
+   * @default true
+   */
+  editable?: boolean;
 }
