@@ -1,6 +1,6 @@
 {
   "name": "@stardust-cms/dashboard",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Extensible host dashboard boilerplate for in-iframe visual editors built on @stardust-cms/iframe-adapter.",
   "type": "module",
   "license": "MIT",
