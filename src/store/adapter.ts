@@ -168,6 +168,30 @@ export interface ContentStoreAdapter {
    * always read `getSnapshot()` after the pointer changes.
    */
   setViewVersion?(version: string | number | null): unknown;
+
+  /**
+   * Subscribe to changes in what {@link getSnapshot} returns. Registers
+   * `listener` and returns an unsubscribe function that deregisters it.
+   *
+   * A conforming store SHOULD invoke every registered listener after ANY
+   * operation that changes its snapshot — including operations the shell does
+   * not route through {@link apply}, such as {@link publish} and
+   * {@link setViewVersion} which consumers may call directly on the store.
+   * That is the whole point of this seam: {@link StoreProvider} subscribes and
+   * re-reads `getSnapshot()` on each notification, so a direct `publish()` /
+   * `setViewVersion()` re-injects into the iframe WITHOUT any synthetic op.
+   *
+   * The listener takes no arguments; on notification the provider reads the
+   * fresh snapshot via {@link getSnapshot}. Listeners must not be assumed to run
+   * synchronously with respect to any particular operation.
+   *
+   * OPTIONAL: a store that omits `subscribe` still conforms. The provider then
+   * relies solely on its {@link apply} wrapper, so such a store behaves exactly
+   * as it did before this seam existed — publish / setViewVersion called
+   * directly on it simply will not trigger a re-inject (unchanged prior
+   * behavior). No behavior regresses for stores without `subscribe`.
+   */
+  subscribe?(listener: () => void): () => void;
 }
 
 /* -------------------------------------------------------------------------- */

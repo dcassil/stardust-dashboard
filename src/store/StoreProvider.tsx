@@ -25,6 +25,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -78,6 +79,32 @@ export function StoreProvider({
     // A new store was injected; adopt its snapshot on this render.
     setSnapshot(store.getSnapshot());
   }
+
+  // If the injected store implements the optional `subscribe` capability,
+  // register a listener that re-reads `getSnapshot()` on every notification.
+  // This closes the gap for operations consumers call DIRECTLY on the store
+  // (e.g. `publish()`, `setViewVersion()`) which never pass through the `apply`
+  // wrapper below — the store notifies, we adopt the fresh snapshot, and the
+  // shell re-injects. The store is neither wrapped nor mutated; we only call
+  // its own `subscribe`/`getSnapshot`. A store WITHOUT `subscribe` skips this
+  // entirely and behaves exactly as before (the `apply` wrapper still works).
+  useEffect((): (() => void) | undefined => {
+    if (store.subscribe === undefined) {
+      return undefined;
+    }
+    // Keep state in sync on each notification. On notification we re-read the
+    // fresh snapshot via `getSnapshot()`; this setState runs from the store's
+    // callback (not synchronously in the effect body), so it does not cause
+    // cascading render churn. The initial snapshot is already seeded by the
+    // `useState` initializer during render, and this effect runs synchronously
+    // after commit — before any store operation the consumer could trigger —
+    // so no mount-time catch-up read is needed. `subscribe` is invoked as a
+    // method ON `store` (not destructured), preserving the store's `this`
+    // without wrapping or mutating it.
+    return store.subscribe(() => {
+      setSnapshot(store.getSnapshot());
+    });
+  }, [store]);
 
   const apply = useCallback(
     (op: HostContentOp): ContentSnapshot => {
