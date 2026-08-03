@@ -651,3 +651,70 @@ describe("HostShell exposes tracked selection (B2)", () => {
     expect(seen.selectedContentId).toBeNull();
   });
 });
+
+/* -------------------------------------------------------------------------- */
+/* Preview mode (dog-ear)                                                      */
+/* -------------------------------------------------------------------------- */
+
+describe("HostShell preview mode (dog-ear)", () => {
+  function iframeEl(): HTMLIFrameElement {
+    return document.querySelector<HTMLIFrameElement>(
+      "iframe.admin-canvas__iframe",
+    )!;
+  }
+
+  it("toggles preview: hides the sidebar, locks scale to 100%, disables overlays", () => {
+    const { adapter } = createFakeAdapter();
+    hostState.scale = 0.5;
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        renderLayout={({ canvas }) => (
+          <div>
+            <aside data-testid="sidebar">SIDE</aside>
+            {canvas}
+          </div>
+        )}
+        renderOverlayChrome={() => <div data-testid="edit-overlay">OV</div>}
+      />,
+    );
+
+    // Edit mode: sidebar + edit overlays present, iframe scaled to fit (0.5).
+    expect(screen.getByTestId("sidebar")).toBeTruthy();
+    expect(screen.getByTestId("edit-overlay")).toBeTruthy();
+    expect(iframeEl().style.transform).toBe("scale(0.5)");
+
+    // Click the dog-ear → enter preview.
+    act(() => {
+      screen.getByRole("button", { name: /hide the sidebar/i }).click();
+    });
+
+    // Sidebar (renderLayout) bypassed, edit overlays suppressed, native 100%.
+    expect(screen.queryByTestId("sidebar")).toBeNull();
+    expect(screen.queryByTestId("edit-overlay")).toBeNull();
+    expect(iframeEl().style.transform).toBe("scale(1)");
+
+    // The dog-ear now offers the exit affordance; clicking restores editing.
+    act(() => {
+      screen.getByRole("button", { name: /show the editor sidebar/i }).click();
+    });
+    expect(screen.getByTestId("sidebar")).toBeTruthy();
+    expect(screen.getByTestId("edit-overlay")).toBeTruthy();
+    expect(iframeEl().style.transform).toBe("scale(0.5)");
+  });
+
+  it("omits the dog-ear entirely when previewable={false}", () => {
+    const { adapter } = createFakeAdapter();
+    render(
+      <HostShell
+        store={adapter}
+        iframeOrigin="http://o.test:1"
+        previewable={false}
+      />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /hide the sidebar/i }),
+    ).toBeNull();
+  });
+});

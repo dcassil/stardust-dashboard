@@ -11,8 +11,8 @@
  * concrete store or `versioned-content-engine`.
  */
 
-import { useMemo, useRef } from "react";
-import type { ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useStardustHost } from "@stardust-cms/iframe-adapter/host";
 import type { ConnectionState } from "@stardust-cms/iframe-adapter/host";
 import { useContentStore } from "../store";
@@ -35,6 +35,7 @@ export interface HostShellCanvasProps {
   designHeight: number;
   headerOffset: number;
   editable: boolean;
+  previewable: boolean;
   blockTypes: BlockTypeRegistry;
   renderStatus: (state: ConnectionState, scale: number) => ReactNode;
   renderLayout: (parts: HostShellLayoutParts) => ReactNode;
@@ -49,6 +50,7 @@ export function HostShellCanvas({
   designHeight,
   headerOffset,
   editable,
+  previewable,
   blockTypes,
   renderStatus,
   renderLayout,
@@ -57,6 +59,13 @@ export function HostShellCanvas({
 }: HostShellCanvasProps): ReactNode {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { apply, store, snapshot } = useContentStore();
+
+  // Preview mode: hide the editor sidebar, render the site at native 100%
+  // scale, and disable the edit overlays. Toggled by the dog-ear control.
+  const [preview, setPreview] = useState(false);
+  const togglePreview = useCallback(() => {
+    setPreview((current) => !current);
+  }, []);
 
   const inject = useInject(store.getSnapshot());
   const { operationCallbacks, selectedTargetId, selectedContentId } =
@@ -81,14 +90,12 @@ export function HostShellCanvas({
 
   useReinject(connectionState === "connected", snapshot, store, inject);
 
-  const overlayChrome = renderOverlayChrome({
-    targets,
-    callbacks,
-    scale,
-    pointer,
-    selectedTargetId,
-    selectedContentId,
-    editable,
+  // In preview the site renders at native 100% and the edit overlays + the
+  // palette/side-panel layer are suppressed (view-only).
+  const effectiveScale = preview ? 1 : scale;
+  const overlayChrome = buildOverlayChrome(preview, renderOverlayChrome, {
+    targets, callbacks, scale, pointer,
+    selectedTargetId, selectedContentId, editable,
   });
 
   const canvas = (
@@ -97,15 +104,18 @@ export function HostShellCanvas({
       iframeSrc={iframeSrc}
       designWidth={designWidth}
       designHeight={designHeight}
-      scale={scale}
+      scale={effectiveScale}
       connectionState={connectionState}
       overlayChrome={overlayChrome}
+      previewable={previewable}
+      preview={preview}
+      onTogglePreview={togglePreview}
     >
-      {children}
+      {preview ? null : children}
     </CanvasFrame>
   );
 
-  const status = renderStatus(connectionState, scale);
+  const status = renderStatus(connectionState, effectiveScale);
 
   const selection = useMemo<HostSelection>(
     () => ({ selectedTargetId, selectedContentId }),
@@ -114,7 +124,7 @@ export function HostShellCanvas({
 
   return (
     <HostSelectionContext.Provider value={selection}>
-      {renderLayout({
+      {composeShellBody(preview, canvas, renderLayout, {
         canvas,
         status,
         children,
@@ -124,3 +134,39 @@ export function HostShellCanvas({
     </HostSelectionContext.Provider>
   );
 }
+
+/** Build the overlay chrome — suppressed (null) in preview, view-only. */
+function buildOverlayChrome(
+  preview: boolean,
+  render: (parts: OverlayChromeParts) => ReactNode,
+  parts: OverlayChromeParts,
+): ReactNode {
+  return preview ? null : render(parts);
+}
+
+/**
+ * Compose the shell body: in preview, a package-owned full-bleed container
+ * (the consumer's `renderLayout` — and its sidebar/status — is bypassed so the
+ * page expands with no demo-side changes; the dog-ear inside `canvas` exits);
+ * otherwise the consumer's `renderLayout`.
+ */
+function composeShellBody(
+  preview: boolean,
+  canvas: ReactNode,
+  renderLayout: (parts: HostShellLayoutParts) => ReactNode,
+  parts: HostShellLayoutParts,
+): ReactNode {
+  if (preview) return <div style={PREVIEW_LAYOUT_STYLE}>{canvas}</div>;
+  return renderLayout(parts);
+}
+
+/** Full-bleed, scrollable, centered container for preview mode. */
+const PREVIEW_LAYOUT_STYLE: CSSProperties = {
+  position: "fixed",
+  inset: 0,
+  overflow: "auto",
+  display: "flex",
+  justifyContent: "center",
+  background: "#ffffff",
+  zIndex: 40,
+};
