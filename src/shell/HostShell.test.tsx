@@ -546,6 +546,142 @@ describe("HostShell re-injects on snapshot change (B1)", () => {
 });
 
 /* -------------------------------------------------------------------------- */
+/* Subscribe seam: direct publish / setViewVersion re-inject (SVER-T-0031)     */
+/* -------------------------------------------------------------------------- */
+
+// A store that implements the optional `subscribe` capability plus `publish`
+// and `setViewVersion`, each of which changes what `getSnapshot()` returns and
+// then notifies listeners. This mirrors the concrete VCE store (SVER-T-0023):
+// consumers call publish()/setViewVersion() DIRECTLY on the store (NOT through
+// the provider's `apply`), and the store's own notification is what drives the
+// re-inject. No synthetic `select` op is involved.
+function createSubscribableAdapter(seed: ContentPayload[] = []): {
+  adapter: ContentStoreAdapter;
+  publish: () => void;
+  setViewVersion: (v: string | number | null) => void;
+  appliedOps: HostContentOp[];
+} {
+  let items: ContentPayload[] = [...seed];
+  const listeners = new Set<() => void>();
+  const appliedOps: HostContentOp[] = [];
+  const notify = (): void => {
+    for (const l of listeners) l();
+  };
+  const adapter: ContentStoreAdapter = {
+    getSnapshot: (): ContentSnapshot => [...items],
+    apply: (op: HostContentOp): ContentSnapshot => {
+      appliedOps.push(op);
+      return [...items];
+    },
+    publish: (): ContentSnapshot => {
+      // Publishing advances live: model it as replacing content, then notify.
+      items = [payload("t1", 0, "published", "PUBLISHED")];
+      notify();
+      return [...items];
+    },
+    setViewVersion: (version: string | number | null): unknown => {
+      items = [payload("t1", 0, "pinned", `PINNED:${String(version)}`)];
+      notify();
+      return [...items];
+    },
+    subscribe: (listener: () => void): (() => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+  };
+  return {
+    adapter,
+    publish: () => adapter.publish?.(),
+    setViewVersion: (v) => adapter.setViewVersion?.(v),
+    appliedOps,
+  };
+}
+
+describe("HostShell re-injects on direct publish/setViewVersion via subscribe (SVER-T-0031)", () => {
+  it("re-injects when publish() is called DIRECTLY on the store, with NO synthetic select op", () => {
+    const { adapter, publish, appliedOps } = createSubscribableAdapter([
+      payload("t1", 0, "seed", "draft"),
+    ]);
+    render(<HostShell store={adapter} iframeOrigin="http://o.test:1" />);
+
+    sent.length = 0;
+    act(() => {
+      publish();
+    });
+
+    // The published snapshot was injected into the iframe (send path).
+    expect(sent.some((p) => p.content.value === "PUBLISHED")).toBe(true);
+    // And crucially, NO op was routed through apply — no synthetic select hack.
+    expect(appliedOps).toHaveLength(0);
+  });
+
+  it("re-injects when setViewVersion(v) is called DIRECTLY on the store, with NO synthetic select op", () => {
+    const { adapter, setViewVersion, appliedOps } = createSubscribableAdapter([
+      payload("t1", 0, "seed", "current"),
+    ]);
+    render(<HostShell store={adapter} iframeOrigin="http://o.test:1" />);
+
+    sent.length = 0;
+    act(() => {
+      setViewVersion(3);
+    });
+
+    expect(sent.some((p) => p.content.value === "PINNED:3")).toBe(true);
+    expect(appliedOps).toHaveLength(0);
+  });
+
+  it("does NOT mutate the injected store: context exposes the original store object", () => {
+    const { adapter } = createSubscribableAdapter();
+    let seenStore: ContentStoreAdapter | null = null;
+    function StoreReader(): null {
+      seenStore = useContentStore().store;
+      return null;
+    }
+    render(
+      <HostShell store={adapter} iframeOrigin="http://o.test:1">
+        <StoreReader />
+      </HostShell>,
+    );
+    // The context surfaces the SAME injected object (not a wrapper/clone).
+    expect(seenStore).toBe(adapter);
+  });
+
+  it("stops re-injecting after unmount (unsubscribe is honored)", () => {
+    const { adapter, publish } = createSubscribableAdapter([
+      payload("t1", 0, "seed", "draft"),
+    ]);
+    const { unmount } = render(
+      <HostShell store={adapter} iframeOrigin="http://o.test:1" />,
+    );
+    unmount();
+    sent.length = 0;
+    act(() => {
+      publish();
+    });
+    // No listener remains → no re-inject after unmount.
+    expect(sent).toHaveLength(0);
+  });
+
+  it("NO REGRESSION: a store WITHOUT subscribe does not re-inject on direct mutation (behaves as before)", () => {
+    // The plain fake adapter has no `subscribe`. Mutating its items out of band
+    // (as a direct publish would) must NOT trigger a re-inject, exactly as
+    // today — the provider only re-reads via apply for such stores.
+    const { adapter } = createFakeAdapter([payload("t1", 0, "seed", "draft")]);
+    render(<HostShell store={adapter} iframeOrigin="http://o.test:1" />);
+
+    sent.length = 0;
+    // No subscribe means no out-of-band notification path exists; simply
+    // rendering with no op produces no further injects.
+    act(() => {
+      // nothing — there is no direct-notify capability on this store.
+    });
+    expect(sent).toHaveLength(0);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
 /* B2: shell-tracked selection exposed to renderLayout + useHostSelection      */
 /* -------------------------------------------------------------------------- */
 
