@@ -57,6 +57,16 @@ import type {
  */
 export type ContentSnapshot = readonly ContentPayload[];
 
+/**
+ * A package-owned seed item: enough information to build one
+ * {@link ContentPayload} for `cms/sendElements`.
+ */
+export interface SeedItem {
+  targetId: string;
+  index: number;
+  content: CmsContent;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Op vocabulary                                                              */
 /* -------------------------------------------------------------------------- */
@@ -151,6 +161,13 @@ export interface ContentStoreAdapter {
 
   /** Materialize a specific historical version, read-only. Versioned stores only. */
   materializeVersion?(version: string): ContentSnapshot;
+
+  /**
+   * Pin the adapter's viewed version, or pass `null` to return to its editable
+   * current view. Versioned stores may return a snapshot, but the shell will
+   * always read `getSnapshot()` after the pointer changes.
+   */
+  setViewVersion?(version: string | number | null): unknown;
 }
 
 /* -------------------------------------------------------------------------- */

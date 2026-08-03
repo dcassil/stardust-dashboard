@@ -13,6 +13,7 @@ export type {
   ContentStoreAdapter,
   HostContentOp,
   HostContentOpKind,
+  SeedItem,
   DeleteOp,
   EditOp,
 } from "./adapter.js";
