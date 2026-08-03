@@ -148,6 +148,17 @@ export interface HostShellProps {
    */
   editable?: boolean;
   /**
+   * Whether the dog-ear preview control is offered on the canvas overlay.
+   * When `true` (default), a folded-corner button sits at the top-right of the
+   * iframe; clicking it enters preview mode — the editor sidebar is hidden (the
+   * consumer's `renderLayout` is bypassed for a full-bleed canvas), the site
+   * renders at native 100% scale, and the edit overlays are disabled. Clicking
+   * again restores editing. Set `false` to omit the affordance entirely (e.g. a
+   * strictly read-only host that manages its own chrome).
+   * @default true
+   */
+  previewable?: boolean;
+  /**
    * The block-type registry (SIFR-T-0034, REQ-004). Drives per-type insert
    * defaults (via each block's `defaultValue()`) and, when the bundled
    * {@link Palette}/{@link SidePanel} are composed as `children`, the palette
