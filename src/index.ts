@@ -74,6 +74,10 @@ export {
   useModalState,
   useOverlayState,
   useLayoutState,
+  useRegisterCommand,
+  useCommands,
+  useRegisterExtension,
+  useExtensions,
 } from "./admin";
 export type {
   AdminProviderProps,

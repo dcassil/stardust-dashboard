@@ -15,6 +15,9 @@ export {
   useLayoutState,
 } from "./hooks.js";
 
+export { useRegisterCommand, useCommands } from "./commandRegistry.js";
+export { useRegisterExtension, useExtensions } from "./extensionRegistry.js";
+
 export type {
   AdminProviderProps,
   OverlayMode,

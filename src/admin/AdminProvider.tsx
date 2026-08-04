@@ -3,12 +3,11 @@
  *
  * The single turnkey provider a host mounts to get the whole admin behavior
  * surface. It composes `EditingProvider` (which itself composes `StoreProvider`
- * from the injected `store`) and publishes the four admin UI-state contexts
- * (sidebar / modal / overlay / layout). Progressive adoption: a host that wants
- * only editing can mount `EditingProvider` directly instead.
+ * from the injected `store`), publishes the four admin UI-state contexts
+ * (sidebar / modal / overlay / layout), and mounts the command + extension
+ * registries (`RegistryProvider`). Progressive adoption: a host that wants only
+ * editing can mount `EditingProvider` directly instead.
  *
- * @internal skeleton — wiring is real, but the UI-state controllers and editing
- * session carry minimal skeleton behavior; the shipped `HostShell` is unchanged.
  * The HostShell refactor onto this provider is DASH-T-0010.
  */
 
@@ -21,6 +20,7 @@ import {
   SidebarContext,
 } from "./adminContext.js";
 import type { AdminProviderProps } from "./adminTypes.js";
+import { RegistryProvider } from "./RegistryProvider.js";
 import { useUiStateRuntime } from "./uiState.js";
 
 /** Fans the UI-state runtime out to the four admin contexts. */
@@ -46,7 +46,9 @@ export function AdminProvider({
 }: AdminProviderProps): ReactNode {
   return (
     <EditingProvider store={store} {...callbacks}>
-      <UiStateProvider>{children}</UiStateProvider>
+      <UiStateProvider>
+        <RegistryProvider>{children}</RegistryProvider>
+      </UiStateProvider>
     </EditingProvider>
   );
 }
