@@ -89,6 +89,22 @@ module.exports = {
       to: { path: "^src/(overlays|shell)/" },
     },
     {
+      name: "layout-public-entry-only",
+      comment:
+        "REQ-007 / NFR-001 (the 'level 1' proof): the turnkey shell + region " +
+        "primitives (src/layout/**) compose every OTHER layer ONLY through its " +
+        "public barrel (index.ts) — never a package-private module. This is the " +
+        "load-bearing guarantee that the default admin (AdminShell) needs no " +
+        "package internals to rebuild. Same-layer sibling imports are unaffected " +
+        "(the `to` pattern excludes src/layout/).",
+      severity: "error",
+      from: { path: "^src/layout/", pathNot: "\\.(test|spec)\\.[tj]sx?$" },
+      to: {
+        path: "^src/(store|editing|admin|blocks|overlays|shell)/",
+        pathNot: "^src/(store|editing|admin|blocks|overlays|shell)/index\\.ts$",
+      },
+    },
+    {
       name: "no-circular",
       comment: "Circular dependencies make the module graph hard to reason about.",
       severity: "error",
