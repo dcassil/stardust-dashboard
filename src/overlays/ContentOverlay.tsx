@@ -28,6 +28,8 @@ import type { EditingRef } from "../editing";
 import { ContentOverlayContext } from "./contentOverlayContext.js";
 import type { ContentOverlayContextValue } from "./contentOverlayContext.js";
 import { SD_CONTENT_OVERLAY, SD_CONTENT_OVERLAY_ITEM } from "./overlaysTypes.js";
+import { SelectionRing } from "./SelectionRing.js";
+import { ContentOverlayActions } from "./Actions.js";
 
 /** Merge a base class with an optional consumer class. */
 function joinClasses(base: string, extra: string | undefined): string {
@@ -110,9 +112,11 @@ function ContentOverlayItem({
 
 /**
  * The compound overlay root. Usable standalone given a `target`; its sub-parts
- * (later tasks) fall back to explicit props when rendered outside it.
+ * fall back to explicit props when rendered outside it. Exported as a compound
+ * component with `ContentOverlay.SelectionRing` (DASH-T-0024) and
+ * `ContentOverlay.Actions` (DASH-T-0025) attached as static members below.
  */
-export function ContentOverlay({
+function ContentOverlayRoot({
   target,
   callbacks,
   className,
@@ -138,3 +142,13 @@ export function ContentOverlay({
     </div>
   );
 }
+
+/**
+ * The compound overlay: `<ContentOverlay>` plus its named parts as static
+ * members (`<ContentOverlay.SelectionRing/>`, `<ContentOverlay.Actions>`),
+ * mirroring the `<Menu>/<Menu.Item>` idiom.
+ */
+export const ContentOverlay = Object.assign(ContentOverlayRoot, {
+  SelectionRing,
+  Actions: ContentOverlayActions,
+});

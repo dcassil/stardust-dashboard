@@ -37,6 +37,10 @@ export const DEFAULT_DELETE_CLASS_NAME = "ov-delete";
 export const SD_CONTENT_OVERLAY = "sd-content-overlay";
 /** Stable class hook on each per-child positioned region within it. */
 export const SD_CONTENT_OVERLAY_ITEM = "sd-content-overlay__item";
+/** Stable class hook on the hover/selected ring (DASH-T-0024). */
+export const SD_SELECTION_RING = "sd-selection-ring";
+/** Stable class hook on the per-item action cluster / named slot (DASH-T-0025). */
+export const SD_ACTIONS = "sd-actions";
 
 /* -------------------------------------------------------------------------- */
 /* Item chrome render-prop                                                    */
