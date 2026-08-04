@@ -21,6 +21,8 @@ export {
   DEFAULT_DELETE_CLASS_NAME,
   SD_CONTENT_OVERLAY,
   SD_CONTENT_OVERLAY_ITEM,
+  SD_SELECTION_RING,
+  SD_ACTIONS,
 } from "./overlaysTypes.js";
 export type {
   OverlaysProps,
@@ -35,3 +37,9 @@ export { ContentOverlay } from "./ContentOverlay.js";
 export type { ContentOverlayProps } from "./ContentOverlay.js";
 export { useContentOverlayContext } from "./contentOverlayContext.js";
 export type { ContentOverlayContextValue } from "./contentOverlayContext.js";
+
+// DASH-T-0024 / DASH-T-0025 — the compound parts, also usable standalone.
+export { SelectionRing } from "./SelectionRing.js";
+export type { SelectionRingProps } from "./SelectionRing.js";
+export { ContentOverlayActions } from "./Actions.js";
+export type { ContentOverlayActionsProps } from "./Actions.js";
