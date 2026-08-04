@@ -96,17 +96,17 @@ export interface EditingActions {
  */
 export interface EditingCallbacks {
   /** After selection changes. */
-  onSelect?(ref: EditingRef | null): void;
+  readonly onSelect?: (ref: EditingRef | null) => void;
   /** When an editing session opens. */
-  onEditingStart?(ref: EditingRef): void;
+  readonly onEditingStart?: (ref: EditingRef) => void;
   /** When an editing session closes. */
-  onEditingStop?(ref: EditingRef): void;
+  readonly onEditingStop?: (ref: EditingRef) => void;
   /** After an `insert` op applies. */
-  onInsert?(op: InsertOp): void;
+  readonly onInsert?: (op: InsertOp) => void;
   /** After a `delete` op applies. */
-  onRemove?(op: DeleteOp): void;
+  readonly onRemove?: (op: DeleteOp) => void;
   /** After a `move` op applies. */
-  onMove?(op: MoveOp): void;
+  readonly onMove?: (op: MoveOp) => void;
   /** After ANY content-mutating op applies, with the fresh snapshot. */
-  onContentChange?(snapshot: ContentSnapshot): void;
+  readonly onContentChange?: (snapshot: ContentSnapshot) => void;
 }
