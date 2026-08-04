@@ -46,6 +46,47 @@ export type {
 } from "@stardust-cms/iframe-adapter/host";
 
 /* -------------------------------------------------------------------------- */
+/* Editing behavior layer (DASH-T-0001 — FROZEN public surface)               */
+/* -------------------------------------------------------------------------- */
+
+export {
+  EditingProvider,
+  useSelection,
+  useEditingState,
+  useEditingActions,
+} from "./editing";
+export type {
+  EditingProviderProps,
+  EditingRef,
+  SelectionState,
+  EditingState,
+  EditingActions,
+  EditingCallbacks,
+} from "./editing";
+
+/* -------------------------------------------------------------------------- */
+/* Admin behavior layer (DASH-T-0001 — FROZEN public surface)                 */
+/* -------------------------------------------------------------------------- */
+
+export {
+  AdminProvider,
+  useSidebarState,
+  useModalState,
+  useOverlayState,
+  useLayoutState,
+} from "./admin";
+export type {
+  AdminProviderProps,
+  OverlayMode,
+  OverlayState,
+  SidebarState,
+  ModalState,
+  ModalEntry,
+  LayoutState,
+  Breakpoint,
+} from "./admin";
+
+/* -------------------------------------------------------------------------- */
 /* Host shell (SIFR-T-0033)                                                   */
 /* -------------------------------------------------------------------------- */
 
