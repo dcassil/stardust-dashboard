@@ -11,6 +11,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
+import { axe } from "jest-axe";
 import type { ReactNode } from "react";
 import type { MappedChild, MappedTarget } from "@stardust-cms/iframe-adapter/host";
 import type { ContentSnapshot, ContentStoreAdapter } from "../store";
@@ -128,6 +129,17 @@ describe("DASH-T-0025 — ContentOverlay.Actions named slot", () => {
     );
     expect(getByText("one")).not.toBeNull();
     expect(getByText("two")).not.toBeNull();
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = render(
+      inOverlay(
+        <ContentOverlayActions>
+          <button type="button">Edit</button>
+        </ContentOverlayActions>,
+      ),
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 
   it("selection hook remains readable alongside the slot (NFR-002 wiring)", () => {

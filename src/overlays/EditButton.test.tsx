@@ -51,6 +51,13 @@ function ControllerProbe({
   return null;
 }
 
+function htmlButtonOf(element: HTMLElement): HTMLButtonElement {
+  if (!(element instanceof HTMLButtonElement)) {
+    throw new Error("Expected an HTML button element");
+  }
+  return element;
+}
+
 describe("DASH-T-0026 — EditButton", () => {
   it("starts editing the overlay item by default (TC-001)", () => {
     let editingRef: EditingRef | null = null;
@@ -108,6 +115,15 @@ describe("DASH-T-0026 — EditButton", () => {
       </EditingProvider>,
     );
     const button = getByRole("button", { name: "Edit block" });
-    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(htmlButtonOf(button).disabled).toBe(true);
+  });
+
+  it("renders null without a resolvable item ref or compound context", () => {
+    const { container } = render(
+      <EditingProvider store={makeStore()}>
+        <EditButton />
+      </EditingProvider>,
+    );
+    expect(container.querySelector("button")).toBeNull();
   });
 });

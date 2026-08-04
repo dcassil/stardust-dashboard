@@ -44,6 +44,15 @@ const TARGETS: MappedTarget[] = [
   },
 ];
 
+const CONTAINER_TARGETS: MappedTarget[] = [
+  {
+    targetId: "container1",
+    isContainer: true,
+    geometry: { top: 0, left: 0, width: 100, height: 100 },
+    children: [child("c1", 0)],
+  },
+];
+
 function fakeAdapter(): ContentStoreAdapter {
   return { getSnapshot: (): ContentSnapshot => [], apply: (): ContentSnapshot => [] };
 }
@@ -79,5 +88,12 @@ describe("DASH-T-0028 — Overlays additive sd-* hooks", () => {
       <Overlays targets={TARGETS} callbacks={{}} showDeleteButton={false} />,
     );
     expect(container.querySelectorAll(`.${SD_REMOVE_BUTTON}`)).toHaveLength(0);
+  });
+
+  it("marks container targets with the default container class", () => {
+    const container = renderOverlays(
+      <Overlays targets={CONTAINER_TARGETS} callbacks={{}} />,
+    );
+    expect(container.querySelector(".ov-target--container")).not.toBeNull();
   });
 });

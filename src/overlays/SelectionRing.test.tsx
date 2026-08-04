@@ -10,6 +10,7 @@
 
 import { act, cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { axe } from "jest-axe";
 import type { ReactNode } from "react";
 import type {
   MappedChild,
@@ -157,5 +158,17 @@ describe("DASH-T-0024 — SelectionRing", () => {
     expect(button.style.left).toBe("20px");
     expect(button.style.width).toBe("100px");
     expect(button.style.height).toBe("30px");
+  });
+
+  it("renders null without a resolvable item ref or compound context", () => {
+    const { container } = renderWithEditing(<SelectionRing />);
+    expect(container.querySelector("button")).toBeNull();
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = renderWithEditing(
+      <SelectionRing itemRef={ref} geometry={geometry} />,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });
