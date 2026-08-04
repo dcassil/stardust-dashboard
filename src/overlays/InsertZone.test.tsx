@@ -8,7 +8,8 @@
  */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render } from "@testing-library/react";
+import { cleanup, createEvent, fireEvent, render } from "@testing-library/react";
+import { axe } from "jest-axe";
 import type { ReactNode } from "react";
 import type { MappedTarget } from "@stardust-cms/iframe-adapter/host";
 import { EditingProvider, useEditingActions } from "../editing";
@@ -120,6 +121,22 @@ describe("DASH-T-0027 — InsertZone drop target", () => {
     expect(moveSpy).not.toHaveBeenCalled();
   });
 
+  it("permits drag-over drops when editable", () => {
+    const { container } = renderZone(<InsertZone target={target} index={0} />);
+    const event = createEvent.dragOver(zoneOf(container), { cancelable: true });
+    fireEvent(zoneOf(container), event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("leaves drag-over inert in read-only mode", () => {
+    const { container } = renderZone(
+      <InsertZone target={target} index={0} editable={false} />,
+    );
+    const event = createEvent.dragOver(zoneOf(container), { cancelable: true });
+    fireEvent(zoneOf(container), event);
+    expect(event.defaultPrevented).toBe(false);
+  });
+
   it("ignores a malformed drop (no op) without throwing", () => {
     const { actions, container } = renderZone(
       <InsertZone target={target} index={0} />,
@@ -129,5 +146,10 @@ describe("DASH-T-0027 — InsertZone drop target", () => {
       dataTransfer: fakeTransfer({}),
     });
     expect(addSpy).not.toHaveBeenCalled();
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = renderZone(<InsertZone target={target} index={0} />);
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

@@ -7,6 +7,7 @@
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
+import { axe } from "jest-axe";
 import type { ReactNode } from "react";
 import type { MappedChild, MappedTarget } from "@stardust-cms/iframe-adapter/host";
 import type {
@@ -49,6 +50,13 @@ function inProvider(node: ReactNode, store = makeStore()): ReactNode {
   return <EditingProvider store={store}>{node}</EditingProvider>;
 }
 
+function htmlButtonOf(element: HTMLElement): HTMLButtonElement {
+  if (!(element instanceof HTMLButtonElement)) {
+    throw new Error("Expected an HTML button element");
+  }
+  return element;
+}
+
 describe("DASH-T-0026 — RemoveButton", () => {
   it("routes delete through the editing controller (TC-001)", () => {
     const apply = vi.fn((): ContentSnapshot => snapshot);
@@ -76,6 +84,11 @@ describe("DASH-T-0026 — RemoveButton", () => {
     expect(queryByRole("button", { name: "Delete block" })).toBeNull();
   });
 
+  it("renders null without a resolvable item ref or compound context", () => {
+    const { container } = render(inProvider(<RemoveButton />));
+    expect(container.querySelector("button")).toBeNull();
+  });
+
   it("renders a disabled button when editable is false", () => {
     const { getByRole } = render(
       inProvider(
@@ -86,6 +99,13 @@ describe("DASH-T-0026 — RemoveButton", () => {
       ),
     );
     const button = getByRole("button", { name: "Delete block" });
-    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(htmlButtonOf(button).disabled).toBe(true);
+  });
+
+  it("has no axe violations", async () => {
+    const { container } = render(
+      inProvider(<RemoveButton itemRef={{ targetId: "t1", contentId: "c1" }} />),
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

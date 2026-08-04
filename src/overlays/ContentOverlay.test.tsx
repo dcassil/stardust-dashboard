@@ -9,15 +9,28 @@
  * so no provider is needed — the compound context is the unit under test.
  */
 
-import { afterEach, describe, expect, it } from "vitest";
-import { cleanup, render } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render } from "@testing-library/react";
+import { axe } from "jest-axe";
 import { useEffect } from "react";
 import type { ReactNode } from "react";
 import type { MappedChild, MappedTarget } from "@stardust-cms/iframe-adapter/host";
+import { AdminProvider } from "../admin";
+import { useEditingState } from "../editing";
+import type { EditingRef } from "../editing";
+import type { ContentSnapshot, ContentStoreAdapter } from "../store";
 import { ContentOverlay } from "./ContentOverlay.js";
+import { EditButton } from "./EditButton.js";
+import { MoveHandle } from "./MoveHandle.js";
+import { RemoveButton } from "./RemoveButton.js";
 import { useContentOverlayContext } from "./contentOverlayContext.js";
 import type { ContentOverlayContextValue } from "./contentOverlayContext.js";
-import { SD_CONTENT_OVERLAY, SD_CONTENT_OVERLAY_ITEM } from "./overlaysTypes.js";
+import {
+  SD_ACTIONS,
+  SD_CONTENT_OVERLAY,
+  SD_CONTENT_OVERLAY_ITEM,
+  SD_EDIT_BUTTON,
+} from "./overlaysTypes.js";
 
 afterEach(cleanup);
 
@@ -36,6 +49,32 @@ const target: MappedTarget = {
   children: [child],
 };
 
+const containerTarget: MappedTarget = {
+  targetId: "container1",
+  isContainer: true,
+  geometry: { top: 0, left: 0, width: 240, height: 240 },
+  children: [child],
+};
+
+function makeStore(): ContentStoreAdapter {
+  const snapshot: ContentSnapshot = [];
+  return {
+    getSnapshot: (): ContentSnapshot => snapshot,
+    apply: (): ContentSnapshot => snapshot,
+  };
+}
+
+function elementOf(container: HTMLElement, selector: string): HTMLElement {
+  const element = container.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Expected element for selector: ${selector}`);
+  }
+  if (!(element instanceof HTMLElement)) {
+    throw new Error(`Expected HTMLElement for selector: ${selector}`);
+  }
+  return element;
+}
+
 /** A probe that surfaces the compound context it reads. */
 function Probe(): ReactNode {
   const ctx = useContentOverlayContext();
@@ -47,6 +86,16 @@ function Probe(): ReactNode {
       data-null={String(ctx === null)}
     />
   );
+}
+
+function EditingProbe({
+  onRead,
+}: {
+  onRead: (value: EditingRef | null) => void;
+}): ReactNode {
+  const editing = useEditingState();
+  onRead(editing.editingRef);
+  return null;
 }
 
 describe("DASH-T-0023 — ContentOverlay compound root", () => {
@@ -87,6 +136,17 @@ describe("DASH-T-0023 — ContentOverlay compound root", () => {
     expect(root?.style.zIndex).toBe("5");
   });
 
+  it("renders a mapped container target through the wrapped target area", () => {
+    const { container } = render(
+      <ContentOverlay
+        target={containerTarget}
+        targetClassName="container-hitbox"
+      />,
+    );
+    expect(container.querySelector('[data-target-id="container1"]')).not.toBeNull();
+    expect(container.querySelector(".container-hitbox")).not.toBeNull();
+  });
+
   it("useContentOverlayContext is null outside a ContentOverlay (standalone fallback)", () => {
     const { getByTestId } = render(<Probe />);
     expect(getByTestId("probe").getAttribute("data-null")).toBe("true");
@@ -113,5 +173,49 @@ describe("DASH-T-0023 — ContentOverlay compound root", () => {
     );
     expect(seen.length).toBeGreaterThanOrEqual(2);
     expect(Object.is(seen[0], seen[seen.length - 1])).toBe(true);
+  });
+
+  it("supports zero-fork EditButton override inside the positioned Actions cluster (TC-002)", () => {
+    let editingRef: EditingRef | null = null;
+    const onClick = vi.fn();
+    const { container } = render(
+      <AdminProvider store={makeStore()}>
+        <EditingProbe
+          onRead={(value) => {
+            editingRef = value;
+          }}
+        />
+        <ContentOverlay target={target}>
+          <ContentOverlay.Actions>
+            <EditButton onClick={onClick} />
+          </ContentOverlay.Actions>
+        </ContentOverlay>
+      </AdminProvider>,
+    );
+    const cluster = elementOf(container, `.${SD_ACTIONS}`);
+    const button = elementOf(container, `.${SD_ACTIONS} .${SD_EDIT_BUTTON}`);
+
+    expect(cluster.getAttribute("role")).toBe("toolbar");
+    expect(cluster.style.position).toBe("absolute");
+    expect(cluster.contains(button)).toBe(true);
+    fireEvent.click(button);
+    expect(onClick).toHaveBeenCalledTimes(1);
+    expect(editingRef).toBeNull();
+  });
+
+  it("has no axe violations with the default action cluster", async () => {
+    const { container } = render(
+      <AdminProvider store={makeStore()}>
+        <ContentOverlay target={target}>
+          <ContentOverlay.SelectionRing />
+          <ContentOverlay.Actions>
+            <EditButton />
+            <RemoveButton />
+            <MoveHandle />
+          </ContentOverlay.Actions>
+        </ContentOverlay>
+      </AdminProvider>,
+    );
+    expect(await axe(container)).toHaveNoViolations();
   });
 });

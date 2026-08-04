@@ -46,6 +46,13 @@ function handleOf(container: HTMLElement): Element {
   return handle;
 }
 
+function htmlButtonOf(element: HTMLElement): HTMLButtonElement {
+  if (!(element instanceof HTMLButtonElement)) {
+    throw new Error("Expected an HTML button element");
+  }
+  return element;
+}
+
 describe("DASH-T-0027 — MoveHandle drag source", () => {
   it("writes the host move keys on drag start from context (TC-002)", () => {
     const { container } = render(
@@ -70,6 +77,11 @@ describe("DASH-T-0027 — MoveHandle drag source", () => {
     expect(dataTransfer.setData).toHaveBeenCalledWith("index", "5");
   });
 
+  it("renders null without a resolvable item ref or compound context", () => {
+    const { container } = render(<MoveHandle />);
+    expect(container.querySelector(`.${SD_MOVE_HANDLE}`)).toBeNull();
+  });
+
   it("is a keyboard-operable button with an accessible name", () => {
     const { getByRole } = render(<MoveHandle itemRef={ref} index={0} />);
     const button = getByRole("button", { name: "Move block" });
@@ -82,7 +94,7 @@ describe("DASH-T-0027 — MoveHandle drag source", () => {
       <MoveHandle itemRef={ref} index={0} editable={false} />,
     );
     const button = getByRole("button", { name: "Move block" });
-    expect((button as HTMLButtonElement).disabled).toBe(true);
+    expect(htmlButtonOf(button).disabled).toBe(true);
     expect(button.getAttribute("draggable")).toBe("false");
   });
 

@@ -9,19 +9,20 @@ export default defineConfig({
     // DASH-T-0022: register the jest-axe `toHaveNoViolations` matcher globally.
     setupFiles: ["src/testing/setup.ts"],
     coverage: {
-      // DASH-T-0022: gate coverage on the structure layer. Computed only under
-      // `--coverage` (the `test:coverage` script) so the default `test` gate
-      // stays fast; the thresholds enforce the ≥95%-statements acceptance
-      // criterion for `src/layout/**`.
+      // DASH-T-0022 (structure layer) + DASH-T-0029 (overlay layer): gate
+      // coverage on the primitive layers. Computed only under `--coverage` (the
+      // `test:coverage` script) so the default `test` gate stays fast; the
+      // thresholds enforce the ≥95%-statements acceptance criterion.
       provider: "v8",
-      include: ["src/layout/**"],
+      include: ["src/layout/**", "src/overlays/**"],
       // Measure production sources only: drop the suites themselves, and the
-      // compound namespace + barrel (pure re-export surface with no runtime
-      // branches) so the metric reflects real region logic.
+      // barrels / compound namespaces (pure re-export surface with no runtime
+      // branches) so the metric reflects real primitive logic.
       exclude: [
-        "src/layout/**/*.{test,spec}.{ts,tsx}",
+        "src/**/*.{test,spec}.{ts,tsx}",
         "src/layout/index.ts",
         "src/layout/Shell.ts",
+        "src/overlays/index.ts",
       ],
       thresholds: {
         statements: 95,
