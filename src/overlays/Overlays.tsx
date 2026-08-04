@@ -34,6 +34,28 @@
  *
  * INVARIANT (NFR-001): imports ONLY the published host primitives/types, React,
  * and the in-package store seam. No concrete store, no `versioned-content-engine`.
+ *
+ * ## DASH-T-0028 — bundled default stays store-routed (back-compat decision)
+ *
+ * DASH-I-0002 ships a composable, controller-wired overlay: `<ContentOverlay>` +
+ * `<SelectionRing>`/`<Actions>`/`<EditButton>`/`<RemoveButton>`/`<MoveHandle>`/
+ * `<InsertZone>` (DASH-T-0023…0027), which route select/edit/remove/move/add
+ * through the DASH-I-0001 controller (`useEditingActions`) and require an
+ * `AdminProvider`. THAT is the composition path for consumers assembling a
+ * bespoke overlay.
+ *
+ * The BUNDLED `Overlays` here intentionally KEEPS its store-routed select/delete
+ * (`useContentStore().apply`) and its `ov-*` DOM, because its frozen contract
+ * test (`Overlays.test.tsx`) mounts it under `StoreProvider` ONLY and asserts
+ * synchronous store ops — routing the bundled default through the controller
+ * would require an `AdminProvider` (a breaking provider-requirement change) and
+ * break that byte-for-byte back-compat gate. So DASH-T-0028's controller-routing
+ * criterion is satisfied by the standalone primitives, not by switching this
+ * bundled default; here the re-implementation is ADDITIVE — the `sd-*` theme
+ * hooks (`sd-content-overlay`, `sd-content-overlay__item`, `sd-remove-button`)
+ * are emitted alongside the `ov-*` classes (see `TargetGroup`/`DeleteButton`).
+ * Migrating the bundled default onto the controller is deferred to a future
+ * major (Daniel's decision, 2026-08-04).
  */
 
 import type { ReactNode } from "react";

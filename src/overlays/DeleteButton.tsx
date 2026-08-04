@@ -8,6 +8,7 @@
 import type { ReactNode } from "react";
 import type { MappedChild } from "@stardust-cms/iframe-adapter/host";
 import type { RenderItemChrome } from "./overlaysTypes.js";
+import { SD_REMOVE_BUTTON } from "./overlaysTypes.js";
 
 interface DeleteButtonProps {
   child: MappedChild;
@@ -29,7 +30,10 @@ function DeleteButton({
   return (
     <button
       type="button"
-      className={className}
+      // DASH-T-0028: `sd-remove-button` emitted additively next to the legacy
+      // `ov-delete` (`className`) so the bundled default delete affordance shares
+      // the standalone `<RemoveButton>` theme hook. Behavior/store path unchanged.
+      className={`${className} ${SD_REMOVE_BUTTON}`}
       title="Delete block"
       style={{
         top: geometry.top + 4,
