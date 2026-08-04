@@ -64,4 +64,20 @@ describe("DASH-T-0015 — OverlayLayer suppresses chrome in preview (TC-001)", (
     // Back to edit: chrome restored.
     expect(container.querySelector('[data-testid="chrome"]')).not.toBeNull();
   });
+
+  it("merges consumer className/style in edit mode", () => {
+    const { container } = render(
+      <AdminProvider store={fakeStore}>
+        <OverlayLayer className="extra" style={{ inset: 4 }}>
+          <div data-testid="chrome" />
+        </OverlayLayer>
+      </AdminProvider>,
+    );
+
+    const layer = container.querySelector<HTMLElement>(`.${SD_OVERLAY_LAYER}`);
+    expect(layer).not.toBeNull();
+    expect(layer?.classList.contains("admin-overlay-layer")).toBe(true);
+    expect(layer?.classList.contains("extra")).toBe(true);
+    expect(layer?.style.inset).toBe("4px");
+  });
 });

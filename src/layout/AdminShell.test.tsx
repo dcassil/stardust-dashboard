@@ -33,6 +33,7 @@ import type {
 import type { CanvasConfig } from "../shell";
 import type { ModalState, SidebarState } from "../admin";
 import type { EditingActions } from "../editing";
+import type { AdminShellProps } from "./layoutTypes.js";
 
 const hostState: {
   lastOptions: UseStardustHostOptions | null;
@@ -181,14 +182,17 @@ function ModalProbe(): ReactNode {
   return null;
 }
 
-function renderAdmin(store: ContentStoreAdapter): HTMLElement {
+function renderAdmin(
+  store: ContentStoreAdapter,
+  props: AdminShellProps = {},
+): HTMLElement {
   const { container } = render(
     <AdminProvider store={store}>
       <CanvasProvider config={config}>
         <RegisterHandles />
         <Capture />
         <ModalProbe />
-        <AdminShell />
+        <AdminShell {...props} />
       </CanvasProvider>
     </AdminProvider>,
   );
@@ -231,6 +235,18 @@ describe("DASH-T-0019 — turnkey AdminShell full frame (TC-002)", () => {
     expect(
       container.querySelector(".sd-topbar__status")?.getAttribute("data-state"),
     ).toBe("connected");
+  });
+
+  it("forwards consumer className/style to ShellRoot", () => {
+    const container = renderAdmin(createFakeAdapter(), {
+      className: "extra",
+      style: { minHeight: 480 },
+    });
+
+    const root = container.querySelector<HTMLElement>(".sd-shell-root");
+    expect(root).not.toBeNull();
+    expect(root?.classList.contains("extra")).toBe(true);
+    expect(root?.style.minHeight).toBe("480px");
   });
 
   it("drives select/insert/edit/delete with the single re-injection preserved", () => {

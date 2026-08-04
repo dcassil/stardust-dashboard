@@ -73,6 +73,22 @@ describe("DASH-T-0014 — Shell.Root visible-region filtering + breakpoint (TC-0
     expect(container.querySelector('[data-testid="region-topbar"]')).not.toBeNull();
     expect(container.querySelector('[data-testid="region-footer"]')).toBeNull();
   });
+
+  it("keeps non-element structural children and applies consumer props", () => {
+    const { container } = render(
+      <AdminProvider store={fakeStore}>
+        <ShellRoot className="extra" style={{ minHeight: 24 }}>
+          structural text
+        </ShellRoot>
+      </AdminProvider>,
+    );
+
+    const root = container.querySelector<HTMLElement>(`.${SD_SHELL_ROOT}`);
+    expect(root).not.toBeNull();
+    expect(root?.classList.contains("extra")).toBe(true);
+    expect(root?.style.minHeight).toBe("24px");
+    expect(root?.textContent).toContain("structural text");
+  });
 });
 
 describe("DASH-T-0014 — Shell.Root narrow subscription (NFR-006)", () => {

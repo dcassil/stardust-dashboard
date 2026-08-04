@@ -10,7 +10,8 @@
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
-import { resolveSlot } from "./slots.js";
+import { defaultFooter, defaultTopbar, resolveSlot } from "./slots.js";
+import { SD_FOOTER, SD_TOPBAR } from "./layoutTypes.js";
 import type { ModalContentContract } from "./layoutTypes.js";
 import type { Command, ToolContribution } from "../admin";
 
@@ -95,5 +96,24 @@ describe("DASH-T-0014 — default renderer branches", () => {
       <>{resolveSlot("loading", undefined, { message: "Connecting" })}</>,
     );
     expect(getByText("Connecting")).not.toBeNull();
+  });
+
+  it("topbar composes the banner landmark from account + action-area", () => {
+    const run = vi.fn();
+    const commands: readonly Command[] = [{ id: "save", title: "Save", run }];
+    const { container, getByText } = render(
+      <>{defaultTopbar({ account: {}, actionArea: { commands, tools: [] } })}</>,
+    );
+    const banner = container.querySelector(`.${SD_TOPBAR}`);
+    expect(banner?.getAttribute("role")).toBe("banner");
+    // The nested action-area command is live inside the composed banner.
+    fireEvent.click(getByText("Save"));
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it("footer stub renders the contentinfo landmark", () => {
+    const { container } = render(<>{defaultFooter()}</>);
+    const footer = container.querySelector(`.${SD_FOOTER}`);
+    expect(footer?.getAttribute("role")).toBe("contentinfo");
   });
 });

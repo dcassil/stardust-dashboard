@@ -120,6 +120,49 @@ describe("DASH-T-0016 — Sidebar slot hosts content (TC-002)", () => {
     // The override received the documented SidebarContract (activeTab), not DOM.
     expect(seen.activeTab).toBe("fields");
   });
+
+  it("routes the slot's setActiveTab through the sidebar controller", () => {
+    const changed: (string | null)[] = [];
+    const sidebar: SidebarState = {
+      open: true,
+      collapsed: false,
+      activeTab: "fields",
+      setOpen: () => undefined,
+      toggle: () => undefined,
+      collapse: () => undefined,
+      setActiveTab: (tab) => {
+        changed.push(tab);
+      },
+    };
+    const layout: LayoutState = {
+      visibleRegions: new Set<string>(),
+      breakpoint: "desktop",
+      setRegionVisible: () => undefined,
+    };
+    const { getByTestId } = render(
+      <SidebarContext.Provider value={sidebar}>
+        <LayoutContext.Provider value={layout}>
+          <Sidebar
+            slots={{
+              sidebar: (contract) => (
+                <button
+                  data-testid="to-style"
+                  type="button"
+                  onClick={() => {
+                    contract.setActiveTab("style");
+                  }}
+                />
+              ),
+            }}
+          />
+        </LayoutContext.Provider>
+      </SidebarContext.Provider>,
+    );
+    act(() => {
+      fireEvent.click(getByTestId("to-style"));
+    });
+    expect(changed).toEqual(["style"]);
+  });
 });
 
 describe("DASH-T-0016 — Sidebar narrow subscription (NFR-006)", () => {

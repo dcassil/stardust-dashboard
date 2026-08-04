@@ -122,6 +122,9 @@ module.exports = {
           "(^|/)tsconfig\\.",
           "(^|/)(vitest|dependency-cruiser)\\.",
           "(^|/)src/index\\.ts$",
+          // Vitest setup/harness files are entries (loaded via `setupFiles`),
+          // not dead code — nothing imports them through the module graph.
+          "(^|/)src/testing/",
           // Test files are graph leaves (nothing imports a test) — not dead code.
           "\\.(test|spec)\\.[tj]sx?$",
           "\\.css$",

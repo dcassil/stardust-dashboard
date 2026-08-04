@@ -25,4 +25,14 @@ describe("DASH-T-0018 — Footer landmark + children", () => {
     expect(footer?.getAttribute("role")).toBe("contentinfo");
     expect(container.querySelector('[data-testid="footer-child"]')).not.toBeNull();
   });
+
+  it("merges consumer className/style", () => {
+    const { container } = render(
+      <Footer className="extra" style={{ minHeight: 20 }} />,
+    );
+    const footer = container.querySelector<HTMLElement>(`.${SD_FOOTER}`);
+    expect(footer).not.toBeNull();
+    expect(footer?.classList.contains("extra")).toBe(true);
+    expect(footer?.style.minHeight).toBe("20px");
+  });
 });
