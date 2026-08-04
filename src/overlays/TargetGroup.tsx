@@ -15,6 +15,7 @@ import type {
   OperationCallbacks,
 } from "@stardust-cms/iframe-adapter/host";
 import type { RenderItemChrome } from "./overlaysTypes.js";
+import { SD_CONTENT_OVERLAY, SD_CONTENT_OVERLAY_ITEM } from "./overlaysTypes.js";
 
 export interface TargetGroupProps {
   target: MappedTarget;
@@ -70,7 +71,11 @@ export function TargetGroup(props: TargetGroupProps): ReactNode {
     containerClass;
 
   return (
-    <div className={groupClassName}>
+    // DASH-T-0028: emit the `sd-content-overlay` hook ADDITIVELY alongside the
+    // legacy `ov-group` (`groupClassName`) so DASH-I-0004's theme can target the
+    // bundled composition with the same `sd-*` vocabulary as the standalone
+    // `<ContentOverlay>`; the `ov-*` classes + behavior are unchanged.
+    <div className={`${groupClassName} ${SD_CONTENT_OVERLAY}`}>
       <TargetAreaOverlay
         target={target}
         {...callbacks}
@@ -79,7 +84,7 @@ export function TargetGroup(props: TargetGroupProps): ReactNode {
         {...(targetStyle ? { style: targetStyle } : {})}
       />
       {target.children.map((child) => (
-        <div key={`chrome-${child.contentId}`}>
+        <div key={`chrome-${child.contentId}`} className={SD_CONTENT_OVERLAY_ITEM}>
           <ContentItemOverlay
             targetId={target.targetId}
             child={child}
