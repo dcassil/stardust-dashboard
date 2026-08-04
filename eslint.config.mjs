@@ -80,6 +80,7 @@ export default tseslint.config(
         { type: "store", partialMatch: false, pattern: "src/store/**" },
         { type: "editing", partialMatch: false, pattern: "src/editing/**" },
         { type: "admin", partialMatch: false, pattern: "src/admin/**" },
+        { type: "layout", partialMatch: false, pattern: "src/layout/**" },
         { type: "blocks", partialMatch: false, pattern: "src/blocks/**" },
         { type: "overlays", partialMatch: false, pattern: "src/overlays/**" },
         { type: "shell", partialMatch: false, pattern: "src/shell/**" },
@@ -201,6 +202,25 @@ export default tseslint.config(
               },
               message:
                 "Boundary violation: '{{from.type}}' may import only store/blocks/overlays/editing/admin, and only through their public entry (index.ts), not file '{{to.internalPath}}'.",
+            },
+            // The layout (structure) layer composes the behavior barrels
+            // (admin/editing) + content barrels (blocks/overlays) + the store
+            // seam, each via its public entry (DASH-T-0013 boundary). It never
+            // imports a concrete store or geometry internals.
+            {
+              from: { element: { type: "layout" } },
+              allow: {
+                to: {
+                  element: {
+                    types: {
+                      anyOf: ["store", "editing", "admin", "blocks", "overlays", "shell"],
+                    },
+                    fileInternalPath: "index.ts",
+                  },
+                },
+              },
+              message:
+                "Boundary violation: '{{from.type}}' may import only store/editing/admin/blocks/overlays/shell, and only through their public entry (index.ts), not file '{{to.internalPath}}'.",
             },
             // Overlays consume only the store seam, via its public entry.
             {
