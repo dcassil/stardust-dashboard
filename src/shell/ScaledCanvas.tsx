@@ -1,10 +1,10 @@
 /**
- * `ScaledCanvas` — the scaled-iframe canvas box, extracted from
- * {@link CanvasFrame} so BOTH the legacy `CanvasFrame` (which wraps it with the
- * bundled `.admin-overlay-layer`) AND the DASH-I-0005 `Shell.IframeArea` region
- * (which mounts a composable `Shell.OverlayLayer` as its child) render the SAME
- * `.admin-canvas-scroll > .admin-canvas > iframe` markup + dog-ear. The DOM is
- * byte-for-byte identical to the pre-extraction `CanvasFrame`.
+ * `ScaledCanvas` — the scaled-iframe canvas box. The DASH-I-0005
+ * `Shell.IframeArea` region wraps it with a composable `Shell.OverlayLayer` child
+ * to render the `.admin-canvas-scroll > .admin-canvas > iframe` markup + dog-ear.
+ * (Before DASH-T-0020 a legacy `CanvasFrame` wrapper shared this same box; that
+ * render-prop path was deleted, and `Shell.IframeArea` is now the sole caller —
+ * the DOM is unchanged.)
  *
  * It renders ONLY structure: the outer scroll box, the relatively-positioned
  * canvas box (so an absolutely-positioned overlay child shares its origin), the

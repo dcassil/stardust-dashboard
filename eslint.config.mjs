@@ -149,6 +149,12 @@ export default tseslint.config(
                         "blocks",
                         "overlays",
                         "shell",
+                        // DASH-T-0020: the `HostShell` public cluster moved to the
+                        // `layout` structure layer (thin wrapper over `AdminShell`);
+                        // the root re-exports it from `layout/index.ts`. The root
+                        // barrel wires every layer through its public entry — this
+                        // is one more such edge, not a boundary relaxation.
+                        "layout",
                       ],
                     },
                     fileInternalPath: "index.ts",

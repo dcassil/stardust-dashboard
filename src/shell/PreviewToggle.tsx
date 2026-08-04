@@ -4,7 +4,7 @@
  * preview mode: hide the editor sidebar, render the embedded site at native
  * 100% scale, and disable the edit overlays. Clicking again restores editing.
  *
- * It is package-owned chrome (rendered by {@link CanvasFrame}, NOT a consumer
+ * It is package-owned chrome (rendered by {@link ScaledCanvas}, NOT a consumer
  * render-prop) and fully INLINE-STYLED so the affordance works in any consumer
  * with no extra stylesheet — a version bump is enough. The folded-corner
  * triangle reads as "peel the page open"; the glyph points outward to expand

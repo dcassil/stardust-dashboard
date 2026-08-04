@@ -1,8 +1,10 @@
 /**
  * Public config defaults and prop/slot types for {@link HostShell}
  * (SIFR-T-0033). Extracted from `HostShell.tsx` so the component modules stay
- * under the size limit; the `shell/index.ts` barrel re-exports every symbol here,
- * keeping the package's public API byte-for-byte unchanged.
+ * under the size limit; the `layout/index.ts` barrel re-exports every symbol here
+ * (and the package root re-exports it from `layout`), keeping the package's public
+ * API byte-for-byte unchanged. (Moved from `shell/` to `layout/` in DASH-T-0020
+ * when `HostShell` became a thin wrapper over the `AdminShell` region substrate.)
  */
 
 import type { ReactNode } from "react";
@@ -173,8 +175,16 @@ export interface HostShellProps {
    */
   renderStatus?: (state: ConnectionState, scale: number) => ReactNode;
   /**
-   * Render-prop controlling the arrangement of the composed regions. Default:
-   * the demo's left-canvas / right-panel-column grid (status above the canvas).
+   * Render-prop controlling the arrangement of the composed regions. When
+   * OMITTED (default), `HostShell` renders the turnkey `AdminShell` region
+   * substrate — the single layout path, with all region behaviors (ModalHost
+   * a11y / CommandRegion / responsive collapse) intact (DASH-T-0020, Option B).
+   *
+   * When SUPPLIED, it REPLACES the `AdminShell` arrangement entirely and receives
+   * the same {@link HostShellLayoutParts}. DOCUMENTED CAVEAT: a consumer that
+   * hand-rolls the layout this way OWNS the region behaviors — those live in the
+   * region primitives the default `AdminShell` composes, so this ONE prop carries
+   * no byte-for-byte behavior guarantee. Bypassed in preview (full-bleed canvas).
    */
   renderLayout?: (parts: HostShellLayoutParts) => ReactNode;
   /**

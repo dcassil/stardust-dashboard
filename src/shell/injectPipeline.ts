@@ -1,7 +1,7 @@
 /**
- * The snapshot re-injection pipeline for {@link HostShellCanvas} (ported from the
- * demo `useContentStore`). Extracted from `HostShell.tsx` so the canvas module
- * stays under the size limit. Not part of the public API.
+ * The snapshot re-injection pipeline for the shared canvas engine
+ * ({@link useCanvasEngine}, ported from the demo `useContentStore`). Not part of
+ * the public API.
  *
  * `useInject` returns a stable `inject(next)` callback that pushes every payload
  * of a snapshot into the iframe via `cms/sendElements`, then blanks any orphaned

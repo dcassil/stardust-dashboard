@@ -73,7 +73,12 @@ function RegisteredPanels(): ReactNode {
   );
 }
 
-export function AdminShell({ slots, className, style }: AdminShellProps): ReactNode {
+export function AdminShell({
+  slots,
+  className,
+  style,
+  overlay,
+}: AdminShellProps): ReactNode {
   const slotsProp = slots ? { slots } : {};
   return (
     <ShellRoot
@@ -84,9 +89,7 @@ export function AdminShell({ slots, className, style }: AdminShellProps): ReactN
       <Sidebar {...slotsProp}>
         <RegisteredPanels />
       </Sidebar>
-      <MainContent {...slotsProp}>
-        <AdminOverlay />
-      </MainContent>
+      <MainContent {...slotsProp}>{overlay ?? <AdminOverlay />}</MainContent>
       <SidePanel />
       <ModalHost {...slotsProp} />
       <Footer />

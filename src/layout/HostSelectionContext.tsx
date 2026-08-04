@@ -1,8 +1,9 @@
 /**
  * The shell-tracked selection context + {@link useHostSelection} hook
  * (SIFR-T-0033 / SIFR-T-0035). Extracted from `HostShell.tsx` so the component
- * modules stay under the size limit; re-exported through `shell/index.ts` so the
- * public API is unchanged.
+ * modules stay under the size limit; re-exported through `layout/index.ts` (and
+ * the package root) so the public API is unchanged. (Moved from `shell/` to
+ * `layout/` in DASH-T-0020 alongside `HostShell`.)
  */
 
 import { createContext, useContext } from "react";

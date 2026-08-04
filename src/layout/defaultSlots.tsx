@@ -1,12 +1,16 @@
 /**
- * Default render-prop slots for {@link HostShell} — the overlay chrome and layout
- * used when a consumer supplies neither. Extracted from `HostShell.tsx` so the
- * component modules stay under the size limit. Not part of the public API.
+ * Default overlay chrome for {@link HostShell} — used when a consumer supplies no
+ * `renderOverlayChrome`. Extracted from `HostShell.tsx` so the component modules
+ * stay under the size limit. Not part of the public API.
+ *
+ * There is NO default `renderLayout` since DASH-T-0020 (Option B): when
+ * `renderLayout` is omitted, `HostShell` renders the turnkey `AdminShell` region
+ * substrate — the single layout path — rather than a bespoke grid.
  */
 
 import type { ReactNode } from "react";
 import { Overlays } from "../overlays";
-import type { HostShellLayoutParts, OverlayChromeParts } from "./hostShellTypes.js";
+import type { OverlayChromeParts } from "./hostShellTypes.js";
 
 /**
  * Default overlay chrome: the bundled {@link Overlays} wrapping the published
@@ -28,19 +32,5 @@ export function defaultRenderOverlayChrome({
       selectedContentId={selectedContentId}
       editable={editable}
     />
-  );
-}
-
-export function defaultRenderLayout({
-  canvas,
-  status,
-}: HostShellLayoutParts): ReactNode {
-  return (
-    <div className="admin-layout">
-      <div className="admin-main">
-        {status}
-        {canvas}
-      </div>
-    </div>
   );
 }

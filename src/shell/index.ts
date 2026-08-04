@@ -1,38 +1,18 @@
 /**
- * `@stardust-cms/dashboard` host-shell barrel (SIFR-T-0033).
+ * `@stardust-cms/dashboard` shell barrel — the scaled-canvas MECHANICS surface.
  *
- * Re-exports the configurable {@link HostShell} composition, its prop/slot types,
- * the {@link useHostSelection} hook, the bundled {@link ConnectionStatus} default
- * status strip, and the config defaults that formerly lived in the demo's
- * `config.ts`. The composition is split across sibling modules (`HostShell.js`,
- * `HostShellCanvas.js`, `hostShellTypes.js`, `HostSelectionContext.js`, …) for
- * size; this barrel is the public entry that unifies them, keeping the package
- * API byte-for-byte unchanged.
+ * Since DASH-T-0020 the shell layer owns only the canvas engine + its markup: the
+ * `HostShell` composition (and its `hostShellTypes`/`HostSelectionContext`/
+ * `ConnectionStatus`/`defaultSlots` cluster) moved to `layout/` when `HostShell`
+ * became a thin wrapper over the `AdminShell` region substrate — that removed the
+ * `shell ↔ layout` import cycle (the `layout` regions read `useCanvas` from here,
+ * so `HostShell` mounting `AdminShell` from within `shell` would have closed a
+ * cycle). This barrel now exposes the {@link CanvasProvider}/{@link useCanvas}
+ * engine + {@link ScaledCanvas} markup that the `layout` structure layer composes
+ * (via the legal `layout → shell` edge) to build `Shell.IframeArea`/
+ * `Shell.MainContent` without re-deriving geometry or opening a second
+ * store-injection path.
  */
-
-export { HostShell } from "./HostShell.js";
-export { useHostSelection } from "./HostSelectionContext.js";
-export {
-  DEFAULT_IFRAME_ORIGIN,
-  DEFAULT_DESIGN_WIDTH,
-  DEFAULT_DESIGN_HEIGHT,
-} from "./hostShellTypes.js";
-export type {
-  HostShellProps,
-  HostShellLayoutParts,
-  OverlayChromeParts,
-  HostSelection,
-} from "./hostShellTypes.js";
-
-export { ConnectionStatus } from "./ConnectionStatus.js";
-export type { ConnectionStatusProps } from "./ConnectionStatus.js";
-
-/* -------------------------------------------------------------------------- */
-/* Canvas-mechanics reuse surface (DASH-T-0015).                              */
-/* The `layout` structure layer composes these via the legal `layout → shell` */
-/* edge to build `Shell.IframeArea`/`Shell.MainContent` without re-deriving    */
-/* geometry or opening a second store-injection path.                          */
-/* -------------------------------------------------------------------------- */
 
 export { CanvasProvider, useCanvas } from "./canvasEngine.js";
 export type { CanvasConfig, CanvasEngineState } from "./canvasEngine.js";

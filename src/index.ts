@@ -104,6 +104,10 @@ export type {
 /* Host shell (SIFR-T-0033)                                                   */
 /* -------------------------------------------------------------------------- */
 
+// Since DASH-T-0020 the `HostShell` cluster lives in the `layout` structure layer
+// (it is a thin wrapper over the `AdminShell` region substrate). The shell layer
+// now owns only the canvas-mechanics engine. Public API is byte-for-byte: the
+// package root is the only entry, and every name below is unchanged.
 export {
   HostShell,
   useHostSelection,
@@ -111,14 +115,14 @@ export {
   DEFAULT_IFRAME_ORIGIN,
   DEFAULT_DESIGN_WIDTH,
   DEFAULT_DESIGN_HEIGHT,
-} from "./shell";
+} from "./layout";
 export type {
   HostShellProps,
   HostShellLayoutParts,
   OverlayChromeParts,
   HostSelection,
   ConnectionStatusProps,
-} from "./shell";
+} from "./layout";
 
 /* -------------------------------------------------------------------------- */
 /* Overlay chrome (SIFR-T-0035)                                               */

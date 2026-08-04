@@ -1,6 +1,6 @@
 /**
- * The re-injection effects for {@link HostShellCanvas}. Extracted from
- * `HostShell.tsx` so the canvas module stays under the size limit. Not public.
+ * The re-injection effects for the shared canvas engine
+ * ({@link useCanvasEngine}). Not public.
  *
  * Two effects, both driving the iframe from store state:
  *

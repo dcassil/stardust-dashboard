@@ -111,6 +111,14 @@ export interface AdminShellProps {
   readonly slots?: Partial<ShellSlots>;
   readonly className?: string;
   readonly style?: CSSProperties;
+  /**
+   * The overlay-layer content mounted over the scaled canvas (inside
+   * `Shell.OverlayLayer`, suppressed in preview). Additive seam (DASH-T-0020):
+   * the `HostShell` thin-wrapper passes its `renderOverlayChrome` output +
+   * `children` here. Omitted → the bundled default overlay (the `Overlays` chrome
+   * fed from `useCanvas`), so the turnkey admin still works standalone.
+   */
+  readonly overlay?: ReactNode;
 }
 
 /* -------------------------------------------------------------------------- */

@@ -79,7 +79,7 @@ const stableSend = (payload: ContentPayload): Promise<void> => {
   sent.push(payload);
   return Promise.resolve();
 };
-vi.mock("./useSendElements.js", () => ({
+vi.mock("../shell/useSendElements.js", () => ({
   useSendElements: () => stableSend,
 }));
 
@@ -252,11 +252,19 @@ describe("HostShell render slots (TC-002)", () => {
     expect(document.querySelector(".admin-layout")).toBeNull();
   });
 
-  it("renders the default layout (admin-layout grid) when no renderLayout given", () => {
+  it("renders the AdminShell region substrate (not the legacy grid) when no renderLayout given", () => {
+    // DASH-T-0020 / Option B: the single default layout path is the turnkey
+    // AdminShell region composition, NOT the legacy `.admin-layout` grid.
     const { adapter } = createFakeAdapter();
     render(<HostShell store={adapter} iframeOrigin="http://o.test:1" />);
-    expect(document.querySelector(".admin-layout")).not.toBeNull();
-    expect(document.querySelector(".admin-main")).not.toBeNull();
+    // Region DOM present…
+    expect(document.querySelector(".sd-shell-root")).not.toBeNull();
+    expect(document.querySelector(".sd-main-content")).not.toBeNull();
+    // …and the region canvas renders exactly one iframe (no second injection path).
+    expect(document.querySelectorAll("iframe.admin-canvas__iframe")).toHaveLength(1);
+    // The legacy bespoke grid is gone.
+    expect(document.querySelector(".admin-layout")).toBeNull();
+    expect(document.querySelector(".admin-main")).toBeNull();
   });
 });
 

@@ -1,8 +1,10 @@
 /**
- * `useCanvasEngine` — the shared scaled-canvas ENGINE (DASH-T-0015), extracted
- * from {@link HostShellCanvas} so it is the SINGLE source of the geometry +
- * store-injection wiring for BOTH the legacy `HostShell` composition AND the
- * DASH-I-0005 region primitives (`Shell.IframeArea`/`Shell.MainContent`).
+ * `useCanvasEngine` — the shared scaled-canvas ENGINE (DASH-T-0015): the SINGLE
+ * source of the geometry + store-injection wiring for the DASH-I-0005 region
+ * primitives (`Shell.IframeArea`/`Shell.MainContent`). Since DASH-T-0020 it is
+ * the ONLY canvas composition (the legacy `HostShellCanvas`/`CanvasFrame`
+ * render-prop path was deleted when `HostShell` became a thin wrapper over
+ * `AdminShell`, so `CanvasProvider` is the single engine mount).
  *
  * It owns exactly one iframe ref + one `useStardustHost` connection + the ONE
  * re-injection effect (`useReinject`) — so wrapping the canvas as composable
