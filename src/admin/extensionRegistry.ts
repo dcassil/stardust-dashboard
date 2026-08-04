@@ -26,6 +26,7 @@ import type {
   AnyExtensionKind,
   ExtensionContribution,
   ExtensionKind,
+  ReservedExtensionKind,
 } from "./adminTypes.js";
 
 type KindMaps = { [K in ExtensionKind]: Map<string, ExtensionContribution<K>> };
@@ -178,4 +179,40 @@ export function useExtensions<K extends ExtensionKind>(
 ): readonly ExtensionContribution<K>[] {
   const registry = useExtensionRegistry();
   return useSyncExternalStore(registry.subscribe, () => registry.getExtensions(kind));
+}
+
+/**
+ * One stable empty snapshot PER reserved kind (so `useSyncExternalStore` never
+ * sees a changing reference and loops, and a future implementation can swap a
+ * kind's entry for a real store without changing the hook). Keyed by `kind`.
+ */
+const reservedSnapshots = new Map<ReservedExtensionKind, readonly never[]>();
+function reservedSnapshotFor(kind: ReservedExtensionKind): readonly never[] {
+  const existing = reservedSnapshots.get(kind);
+  if (existing !== undefined) {
+    return existing;
+  }
+  const empty: readonly never[] = [];
+  reservedSnapshots.set(kind, empty);
+  return empty;
+}
+
+/**
+ * Read a RESERVED extension kind's contributions (DASH-I-0005 forward-compat seam).
+ *
+ * Reserved kinds (`navigation`/`permissions`/`currentUser`/`resources`) are not
+ * implemented this round: REGISTERING one THROWS (see `register`), but READING one
+ * must be a safe no-op — so a region like `Shell.TopBar` can wire the seam NOW
+ * (e.g. reserved `navigation`) and render nothing until the kind ships, with no
+ * API change and NO throw at render. The guard is on registration, not reads.
+ *
+ * It subscribes to the registry (so a future implementation re-renders the reader)
+ * and returns a stable empty snapshot, since reserved kinds have no store yet. The
+ * `never[]` element type reflects that there is nothing renderable to map over.
+ */
+export function useReservedExtensions(
+  kind: ReservedExtensionKind,
+): readonly never[] {
+  const registry = useExtensionRegistry();
+  return useSyncExternalStore(registry.subscribe, () => reservedSnapshotFor(kind));
 }

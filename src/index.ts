@@ -78,6 +78,7 @@ export {
   useCommands,
   useRegisterExtension,
   useExtensions,
+  useReservedExtensions,
 } from "./admin";
 export type {
   AdminProviderProps,

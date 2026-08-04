@@ -16,7 +16,11 @@ export {
 } from "./hooks.js";
 
 export { useRegisterCommand, useCommands } from "./commandRegistry.js";
-export { useRegisterExtension, useExtensions } from "./extensionRegistry.js";
+export {
+  useRegisterExtension,
+  useExtensions,
+  useReservedExtensions,
+} from "./extensionRegistry.js";
 
 export type {
   AdminProviderProps,
