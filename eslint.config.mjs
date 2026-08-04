@@ -78,6 +78,8 @@ export default tseslint.config(
         // classification as the old single-file pattern, without the v7
         // file-pattern advisory.
         { type: "store", partialMatch: false, pattern: "src/store/**" },
+        { type: "editing", partialMatch: false, pattern: "src/editing/**" },
+        { type: "admin", partialMatch: false, pattern: "src/admin/**" },
         { type: "blocks", partialMatch: false, pattern: "src/blocks/**" },
         { type: "overlays", partialMatch: false, pattern: "src/overlays/**" },
         { type: "shell", partialMatch: false, pattern: "src/shell/**" },
@@ -138,13 +140,48 @@ export default tseslint.config(
               allow: {
                 to: {
                   element: {
-                    types: { anyOf: ["store", "blocks", "overlays", "shell"] },
+                    types: {
+                      anyOf: [
+                        "store",
+                        "editing",
+                        "admin",
+                        "blocks",
+                        "overlays",
+                        "shell",
+                      ],
+                    },
                     fileInternalPath: "index.ts",
                   },
                 },
               },
               message:
                 "Boundary violation: the package root barrel '{{from.type}}' must import layer '{{to.type}}' through its public entry (index.ts), not file '{{to.internalPath}}'.",
+            },
+            // The editing behavior layer composes ONLY the store seam, via its
+            // public entry (DASH-T-0001 boundary). Host op/ref types come from
+            // the external `@stardust-cms/iframe-adapter` package (not governed).
+            {
+              from: { element: { type: "editing" } },
+              allow: {
+                to: { element: { type: "store", fileInternalPath: "index.ts" } },
+              },
+              message:
+                "Boundary violation: '{{from.type}}' may import only the store seam, and only through its public entry (index.ts), not file '{{to.internalPath}}'.",
+            },
+            // The admin behavior layer composes the store seam and the editing
+            // layer, each via its public entry (DASH-T-0001 boundary).
+            {
+              from: { element: { type: "admin" } },
+              allow: {
+                to: {
+                  element: {
+                    types: { anyOf: ["store", "editing"] },
+                    fileInternalPath: "index.ts",
+                  },
+                },
+              },
+              message:
+                "Boundary violation: '{{from.type}}' may import only store/editing, and only through their public entry (index.ts), not file '{{to.internalPath}}'.",
             },
             // The shell composes the store seam, blocks, and overlays — each via
             // its public entry.

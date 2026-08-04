@@ -41,14 +41,34 @@ module.exports = {
       name: "store-no-internal-layers",
       comment:
         "NFR-001: the store seam (src/store/**) is the decoupling substrate — it " +
-        "must not depend on any other internal layer (blocks/overlays/shell). It " +
-        "imports only published host/protocol types.",
+        "must not depend on any other internal layer (editing/admin/blocks/overlays/shell). " +
+        "It imports only published host/protocol types.",
       severity: "error",
       from: { path: "^src/store/" },
       to: {
-        path: "^src/(blocks|overlays|shell)/",
+        path: "^src/(editing|admin|blocks|overlays|shell)/",
         pathNot: "\\.(test|spec)\\.[tj]sx?$",
       },
+    },
+    {
+      name: "editing-only-store",
+      comment:
+        "DASH-T-0001 boundary: the editing behavior layer (src/editing/**) may " +
+        "import ONLY the store seam (via its public entry) and external host " +
+        "ref/op types. It must not reach into admin/blocks/overlays/shell.",
+      severity: "error",
+      from: { path: "^src/editing/", pathNot: "\\.(test|spec)\\.[tj]sx?$" },
+      to: { path: "^src/(admin|blocks|overlays|shell)/" },
+    },
+    {
+      name: "admin-only-store-editing",
+      comment:
+        "DASH-T-0001 boundary: the admin behavior layer (src/admin/**) may import " +
+        "ONLY the store seam and the editing layer (via their public entries). It " +
+        "must not reach into blocks/overlays/shell.",
+      severity: "error",
+      from: { path: "^src/admin/", pathNot: "\\.(test|spec)\\.[tj]sx?$" },
+      to: { path: "^src/(blocks|overlays|shell)/" },
     },
     {
       name: "overlays-only-store",
