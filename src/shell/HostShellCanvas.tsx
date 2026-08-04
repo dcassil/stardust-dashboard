@@ -11,16 +11,18 @@
  * concrete store or `versioned-content-engine`.
  */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { useStardustHost } from "@stardust-cms/iframe-adapter/host";
 import type { ConnectionState } from "@stardust-cms/iframe-adapter/host";
 import { useContentStore } from "../store";
+import { useSelection } from "../editing";
+import { useOverlayState } from "../admin";
 import type { BlockTypeRegistry } from "../blocks";
 import { HostSelectionContext } from "./HostSelectionContext.js";
 import { CanvasFrame } from "./CanvasFrame.js";
 import { useInject } from "./injectPipeline.js";
-import { useHostOps } from "./useHostOps.js";
+import { useOperationCallbacks } from "./useOperationCallbacks.js";
 import { useReinject } from "./useReinject.js";
 import type {
   HostSelection,
@@ -58,18 +60,22 @@ export function HostShellCanvas({
   children,
 }: HostShellCanvasProps): ReactNode {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { apply, store, snapshot } = useContentStore();
+  const { store, snapshot } = useContentStore();
 
-  // Preview mode: hide the editor sidebar, render the site at native 100%
-  // scale, and disable the edit overlays. Toggled by the dog-ear control.
-  const [preview, setPreview] = useState(false);
+  // Preview mode is owned by the behavior layer's overlay state (DASH-T-0007):
+  // the dog-ear toggles `useOverlayState().mode` between "edit" and "preview".
+  // In preview: hide the editor sidebar, render at native 100%, disable overlays.
+  const overlay = useOverlayState();
+  const preview = overlay.mode === "preview";
   const togglePreview = useCallback(() => {
-    setPreview((current) => !current);
-  }, []);
+    overlay.setMode(preview ? "edit" : "preview");
+  }, [overlay, preview]);
 
   const inject = useInject(store.getSnapshot());
-  const { operationCallbacks, selectedTargetId, selectedContentId } =
-    useHostOps(apply, blockTypes);
+  // Selection + op-callbacks come from the behavior controller (via AdminProvider
+  // mounted by HostShell), NOT the former private `useHostOps`.
+  const { selectedTargetId, selectedContentId } = useSelection();
+  const operationCallbacks = useOperationCallbacks(blockTypes);
 
   const { scale, connectionState, targets, callbacks, pointer } = useStardustHost(
     iframeRef,

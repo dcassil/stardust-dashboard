@@ -183,20 +183,24 @@ export default tseslint.config(
               message:
                 "Boundary violation: '{{from.type}}' may import only store/editing, and only through their public entry (index.ts), not file '{{to.internalPath}}'.",
             },
-            // The shell composes the store seam, blocks, and overlays — each via
-            // its public entry.
+            // The shell composes the store seam, blocks, overlays, and — since
+            // the DASH-T-0010 refactor — the editing + admin behavior layers,
+            // each via its public entry. (HostShell mounts AdminProvider and the
+            // canvas reads useSelection/useOverlayState + useEditingActions.)
             {
               from: { element: { type: "shell" } },
               allow: {
                 to: {
                   element: {
-                    types: { anyOf: ["store", "blocks", "overlays"] },
+                    types: {
+                      anyOf: ["store", "blocks", "overlays", "editing", "admin"],
+                    },
                     fileInternalPath: "index.ts",
                   },
                 },
               },
               message:
-                "Boundary violation: '{{from.type}}' may import only store/blocks/overlays, and only through their public entry (index.ts), not file '{{to.internalPath}}'.",
+                "Boundary violation: '{{from.type}}' may import only store/blocks/overlays/editing/admin, and only through their public entry (index.ts), not file '{{to.internalPath}}'.",
             },
             // Overlays consume only the store seam, via its public entry.
             {

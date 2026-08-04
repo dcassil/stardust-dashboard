@@ -16,8 +16,11 @@
  *  1. `FrameLinkProvider` — the frame-link transport, with `targetOrigin` set to
  *     the explicit `iframeOrigin` (never `"*"`, NFR-002). Kept module-stable via
  *     a ref so the connection is not torn down on every render.
- *  2. `StoreProvider(store)` — the injected {@link ContentStoreAdapter}, exposing
- *     the live snapshot + `apply` to the tree via `useContentStore()`.
+ *  2. `AdminProvider(store)` — the behavior layer (DASH-I-0001): it composes
+ *     `StoreProvider` from the injected {@link ContentStoreAdapter} and mounts the
+ *     editing controller + UI-state controllers + registries. The canvas sources
+ *     its selection (`useSelection`), op-callbacks (`useOperationCallbacks`), and
+ *     preview mode (`useOverlayState`) from it instead of the former `useHostOps`.
  *  3. The scaled iframe canvas + the ops → store → injection pipeline, both owned
  *     by {@link HostShellCanvas} (which lives inside the two providers).
  *
@@ -47,7 +50,7 @@ import { useMemo } from "react";
 import type { ReactNode } from "react";
 import { FrameLinkProvider } from "frame-link-react";
 import type { ConnectionState } from "@stardust-cms/iframe-adapter/host";
-import { StoreProvider } from "../store";
+import { AdminProvider } from "../admin";
 import { ConnectionStatus } from "./ConnectionStatus.js";
 import { HostShellCanvas } from "./HostShellCanvas.js";
 import {
@@ -109,7 +112,7 @@ export function HostShell(props: HostShellProps): ReactNode {
 
   return (
     <FrameLinkProvider options={frameLinkOptions}>
-      <StoreProvider store={store}>
+      <AdminProvider store={store}>
         <div className="admin-root">
           <HostShellCanvas
             iframeOrigin={iframeOrigin}
@@ -127,7 +130,7 @@ export function HostShell(props: HostShellProps): ReactNode {
             {children}
           </HostShellCanvas>
         </div>
-      </StoreProvider>
+      </AdminProvider>
     </FrameLinkProvider>
   );
 }
