@@ -1,5 +1,5 @@
 /**
- * `useEditingActions` (DASH-T-0003) — builds the imperative {@link EditingActions},
+ * `useControllerActions` (DASH-T-0003) — builds the imperative {@link EditingActions},
  * the host {@link OperationCallbacks} view, and the post-commit event queue for
  * {@link useEditingController}. Co-located so each function stays within the
  * size/complexity ceilings.
@@ -60,7 +60,7 @@ function selectionFor(ref: EditingRef | null): SelectionState {
       };
 }
 
-export function useEditingActions(
+export function useControllerActions(
   apply: (op: DeleteOp | EditOp | InsertOp | MoveOp | SelectOp) => ContentSnapshot,
   setSelection: (next: SelectionState) => void,
   setEditing: (next: EditingState) => void,

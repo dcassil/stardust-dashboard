@@ -3,7 +3,7 @@
  * successor to `src/shell/useHostOps.ts`. It owns selection + editing-session
  * state and delegates the imperative {@link EditingActions}, the host
  * `OperationCallbacks` view (for the shell — DASH-T-0010), and the post-commit
- * event queue (for the emitter — DASH-T-0004) to {@link useEditingActions}.
+ * event queue (for the emitter — DASH-T-0004) to {@link useControllerActions}.
  *
  * BOUNDARY: `add(op: InsertOp)` receives a COMPLETE op. Insert-defaults
  * (`applyInsertDefaults`, a block-registry concern) stay in the shell so this
@@ -16,7 +16,7 @@ import { useState } from "react";
 import type { OperationCallbacks } from "@stardust-cms/iframe-adapter/host";
 import { useContentStore } from "../store";
 import type { EditingEvent } from "./editingEvents.js";
-import { useEditingActions } from "./useEditingActions.js";
+import { useControllerActions } from "./useControllerActions.js";
 import type {
   EditingActions,
   EditingState,
@@ -47,7 +47,7 @@ export function useEditingController(): EditingController {
   const [selection, setSelection] = useState<SelectionState>(EMPTY_SELECTION);
   const [editing, setEditing] = useState<EditingState>(IDLE_EDITING);
 
-  const { actions, operationCallbacks, drainPendingEvents } = useEditingActions(
+  const { actions, operationCallbacks, drainPendingEvents } = useControllerActions(
     apply,
     setSelection,
     setEditing,

@@ -7,14 +7,13 @@
  * read by `useSelection`, `useEditingState`, `useEditingActions`. The post-commit
  * lifecycle callbacks (REQ-006) are individual props (`onSelect`, …).
  *
- * The controller QUEUES events; an interim post-commit effect here drains them
- * and dispatches to the callbacks AFTER commit (never during render — NFR-006).
- * DASH-T-0004 EXTRACTS this effect into `editing/eventEmitter.ts` and hardens it
- * (once-per-action guarantees, ordering, StrictMode safety). The shipped
- * `HostShell` is unchanged (its refactor onto this surface is DASH-T-0010).
+ * The controller QUEUES events; the {@link useEditingEventEmitter} hook drains
+ * them and dispatches to the callbacks AFTER commit, exactly once each, never
+ * during render (REQ-006 / NFR-006). The shipped `HostShell` is unchanged (its
+ * refactor onto this surface is DASH-T-0010).
  */
 
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { StoreProvider } from "../store";
 import type { ContentStoreAdapter } from "../store";
 import {
@@ -22,7 +21,7 @@ import {
   EditingStateContext,
   SelectionContext,
 } from "./editingContext.js";
-import { dispatchEditingEvent } from "./editingEvents.js";
+import { useEditingEventEmitter } from "./eventEmitter.js";
 import type { EditingCallbacks } from "./editingTypes.js";
 import { useEditingController } from "./useEditingController.js";
 
@@ -48,20 +47,7 @@ function EditingRuntimeProvider({
   const { selection, editing, actions, drainPendingEvents } =
     useEditingController();
 
-  const callbacksRef = useRef(callbacks);
-  useEffect(() => {
-    callbacksRef.current = callbacks;
-  }, [callbacks]);
-
-  // Interim post-commit emitter (DASH-T-0004 extracts + hardens this): after
-  // each commit, drain any events the controller queued during an action and
-  // dispatch them to the callbacks. Runs post-commit, so callbacks never fire
-  // during render (NFR-006); draining an empty queue is a no-op.
-  useEffect(() => {
-    for (const event of drainPendingEvents()) {
-      dispatchEditingEvent(event, callbacksRef.current);
-    }
-  });
+  useEditingEventEmitter(drainPendingEvents, callbacks);
 
   return (
     <SelectionContext.Provider value={selection}>
