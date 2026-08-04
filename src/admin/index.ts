@@ -24,4 +24,13 @@ export type {
   ModalEntry,
   LayoutState,
   Breakpoint,
+  Command,
+  Action,
+  PanelContribution,
+  ToolContribution,
+  ExtensionKind,
+  ReservedExtensionKind,
+  AnyExtensionKind,
+  ReservedContribution,
+  ExtensionContribution,
 } from "./adminTypes.js";

@@ -100,6 +100,90 @@ export interface LayoutState {
   setRegionVisible(region: string, visible: boolean): void;
 }
 
+/* -------------------------------------------------------------------------- */
+/* Command + extension registry types (REQ-011/012)                           */
+/* The registries themselves are DASH-T-0008; these are the pure-type contract */
+/* they and the DASH-I-0005 auto-render seam consume.                          */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * A registrable command (REQ-011). `run` performs it; `when` gates visibility
+ * against an opaque context; `keybinding` is an optional accelerator. `ctx` is
+ * `unknown` this round — a future `permissions` seam narrows it (Designed-for-
+ * later seams) without changing this shape.
+ */
+export interface Command {
+  readonly id: string;
+  readonly title: string;
+  run(ctx?: unknown): void;
+  when?(ctx?: unknown): boolean;
+  readonly keybinding?: string;
+}
+
+/**
+ * A registrable action (REQ-012) — a command-like unit without title/keybinding
+ * chrome, invoked programmatically rather than surfaced in a palette.
+ */
+export interface Action {
+  readonly id: string;
+  run(ctx?: unknown): void;
+}
+
+/** A panel contribution (REQ-012): an id + a render descriptor. */
+export interface PanelContribution {
+  readonly id: string;
+  render(): ReactNode;
+}
+
+/** A tool contribution (REQ-012): an id + a render descriptor. */
+export interface ToolContribution {
+  readonly id: string;
+  render(): ReactNode;
+}
+
+/** The four extension kinds IMPLEMENTED this round (REQ-012). */
+export type ExtensionKind = "commands" | "actions" | "panels" | "tools";
+
+/**
+ * The four DESIGNED-FOR-LATER kinds — reserved in the type union NOW so adding
+ * their implementation later is additive (no breaking change to the
+ * registration signature). Registering one is a typed + runtime "not implemented
+ * this round" error (the guard is DASH-T-0008).
+ */
+export type ReservedExtensionKind =
+  | "navigation"
+  | "permissions"
+  | "currentUser"
+  | "resources";
+
+/** Every kind the registration API accepts — forward-compatible union. */
+export type AnyExtensionKind = ExtensionKind | ReservedExtensionKind;
+
+/**
+ * Marks a reserved kind's contribution: no shape is implemented this round, so
+ * the branded field makes constructing one visible at compile time (the runtime
+ * throw lives in DASH-T-0008).
+ */
+export interface ReservedContribution {
+  readonly __reserved: "not implemented this round";
+}
+
+/**
+ * The typed contribution for a given extension kind (REQ-012), keyed on `K` so
+ * `useRegisterExtension(kind, contribution)` type-checks the contribution
+ * against the kind. Reserved kinds resolve to {@link ReservedContribution}.
+ */
+export type ExtensionContribution<K extends AnyExtensionKind> =
+  K extends "commands"
+    ? Command
+    : K extends "actions"
+      ? Action
+      : K extends "panels"
+        ? PanelContribution
+        : K extends "tools"
+          ? ToolContribution
+          : ReservedContribution;
+
 /**
  * Props for the `AdminProvider` root (REQ-009). The editing lifecycle callbacks
  * are spread as individual props and forwarded to `EditingProvider`.
