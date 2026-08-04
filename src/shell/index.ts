@@ -26,3 +26,15 @@ export type {
 
 export { ConnectionStatus } from "./ConnectionStatus.js";
 export type { ConnectionStatusProps } from "./ConnectionStatus.js";
+
+/* -------------------------------------------------------------------------- */
+/* Canvas-mechanics reuse surface (DASH-T-0015).                              */
+/* The `layout` structure layer composes these via the legal `layout → shell` */
+/* edge to build `Shell.IframeArea`/`Shell.MainContent` without re-deriving    */
+/* geometry or opening a second store-injection path.                          */
+/* -------------------------------------------------------------------------- */
+
+export { CanvasProvider, useCanvas } from "./canvasEngine.js";
+export type { CanvasConfig, CanvasEngineState } from "./canvasEngine.js";
+export { ScaledCanvas } from "./ScaledCanvas.js";
+export type { ScaledCanvasProps } from "./ScaledCanvas.js";

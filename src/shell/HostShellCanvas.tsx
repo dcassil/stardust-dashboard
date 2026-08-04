@@ -11,24 +11,18 @@
  * concrete store or `versioned-content-engine`.
  */
 
-import { useCallback, useMemo, useRef } from "react";
+import { useMemo } from "react";
 import type { CSSProperties, ReactNode } from "react";
-import { useStardustHost } from "@stardust-cms/iframe-adapter/host";
-import type { ConnectionState } from "@stardust-cms/iframe-adapter/host";
-import { useContentStore } from "../store";
-import { useSelection } from "../editing";
-import { useOverlayState } from "../admin";
 import type { BlockTypeRegistry } from "../blocks";
 import { HostSelectionContext } from "./HostSelectionContext.js";
 import { CanvasFrame } from "./CanvasFrame.js";
-import { useInject } from "./injectPipeline.js";
-import { useOperationCallbacks } from "./useOperationCallbacks.js";
-import { useReinject } from "./useReinject.js";
+import { useCanvasEngine } from "./canvasEngine.js";
 import type {
   HostSelection,
   HostShellLayoutParts,
   OverlayChromeParts,
 } from "./hostShellTypes.js";
+import type { ConnectionState } from "@stardust-cms/iframe-adapter/host";
 
 export interface HostShellCanvasProps {
   iframeOrigin: string;
@@ -59,46 +53,33 @@ export function HostShellCanvas({
   renderOverlayChrome,
   children,
 }: HostShellCanvasProps): ReactNode {
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const { store, snapshot } = useContentStore();
-
-  // Preview mode is owned by the behavior layer's overlay state (DASH-T-0007):
-  // the dog-ear toggles `useOverlayState().mode` between "edit" and "preview".
-  // In preview: hide the editor sidebar, render at native 100%, disable overlays.
-  const overlay = useOverlayState();
-  const preview = overlay.mode === "preview";
-  const togglePreview = useCallback(() => {
-    overlay.setMode(preview ? "edit" : "preview");
-  }, [overlay, preview]);
-
-  const inject = useInject(store.getSnapshot());
-  // Selection + op-callbacks come from the behavior controller (via AdminProvider
-  // mounted by HostShell), NOT the former private `useHostOps`.
-  const { selectedTargetId, selectedContentId } = useSelection();
-  const operationCallbacks = useOperationCallbacks(blockTypes);
-
-  const { scale, connectionState, targets, callbacks, pointer } = useStardustHost(
+  // The scaled-canvas wiring (iframe ref + host connection + the SINGLE
+  // re-injection effect + preview state) lives in the shared engine (DASH-T-0015)
+  // so the legacy composition and the region primitives share one injector.
+  const {
     iframeRef,
-    {
-      origin: iframeOrigin,
-      headerOffset,
-      ...(operationCallbacks.onInsert
-        ? { onInsert: operationCallbacks.onInsert }
-        : {}),
-      ...(operationCallbacks.onMove
-        ? { onMove: operationCallbacks.onMove }
-        : {}),
-      ...(operationCallbacks.onSelect
-        ? { onSelect: operationCallbacks.onSelect }
-        : {}),
-    },
-  );
-
-  useReinject(connectionState === "connected", snapshot, store, inject);
+    scale,
+    effectiveScale,
+    connectionState,
+    targets,
+    callbacks,
+    pointer,
+    preview,
+    togglePreview,
+    selectedTargetId,
+    selectedContentId,
+  } = useCanvasEngine({
+    iframeOrigin,
+    iframeSrc,
+    designWidth,
+    designHeight,
+    headerOffset,
+    blockTypes,
+    previewable,
+  });
 
   // In preview the site renders at native 100% and the edit overlays + the
   // palette/side-panel layer are suppressed (view-only).
-  const effectiveScale = preview ? 1 : scale;
   const overlayChrome = buildOverlayChrome(preview, renderOverlayChrome, {
     targets, callbacks, scale, pointer,
     selectedTargetId, selectedContentId, editable,
