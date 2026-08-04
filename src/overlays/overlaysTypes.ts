@@ -41,6 +41,14 @@ export const SD_CONTENT_OVERLAY_ITEM = "sd-content-overlay__item";
 export const SD_SELECTION_RING = "sd-selection-ring";
 /** Stable class hook on the per-item action cluster / named slot (DASH-T-0025). */
 export const SD_ACTIONS = "sd-actions";
+/** Stable class hook on the default edit button (DASH-T-0026). */
+export const SD_EDIT_BUTTON = "sd-edit-button";
+/** Stable class hook on the default remove button (DASH-T-0026). */
+export const SD_REMOVE_BUTTON = "sd-remove-button";
+/** Stable class hook on the reorder drag handle (DASH-T-0027). */
+export const SD_MOVE_HANDLE = "sd-move-handle";
+/** Stable class hook on the palette-insert drop zone (DASH-T-0027). */
+export const SD_INSERT_ZONE = "sd-insert-zone";
 
 /* -------------------------------------------------------------------------- */
 /* Item chrome render-prop                                                    */
