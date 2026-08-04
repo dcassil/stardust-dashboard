@@ -19,9 +19,19 @@ export {
   DEFAULT_SELECTED_ITEM_CLASS_NAME,
   DEFAULT_GROUP_CLASS_NAME,
   DEFAULT_DELETE_CLASS_NAME,
+  SD_CONTENT_OVERLAY,
+  SD_CONTENT_OVERLAY_ITEM,
 } from "./overlaysTypes.js";
 export type {
   OverlaysProps,
   ItemChromeActions,
   RenderItemChrome,
 } from "./overlaysTypes.js";
+
+// DASH-T-0023 — composable compound overlay root + its typed context. Static
+// parts (`.SelectionRing`/`.Actions`) and the action primitives land in
+// DASH-T-0024…0027; root re-export (src/index.ts) + JSDoc is DASH-T-0030.
+export { ContentOverlay } from "./ContentOverlay.js";
+export type { ContentOverlayProps } from "./ContentOverlay.js";
+export { useContentOverlayContext } from "./contentOverlayContext.js";
+export type { ContentOverlayContextValue } from "./contentOverlayContext.js";

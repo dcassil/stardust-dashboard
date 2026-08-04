@@ -30,6 +30,15 @@ export const DEFAULT_GROUP_CLASS_NAME = "ov-group";
 export const DEFAULT_DELETE_CLASS_NAME = "ov-delete";
 
 /* -------------------------------------------------------------------------- */
+/* Composable `sd-*` class hooks (DASH-I-0002 REQ-010; styled by DASH-I-0004) */
+/* -------------------------------------------------------------------------- */
+
+/** Stable class hook on the compound `<ContentOverlay>` root. */
+export const SD_CONTENT_OVERLAY = "sd-content-overlay";
+/** Stable class hook on each per-child positioned region within it. */
+export const SD_CONTENT_OVERLAY_ITEM = "sd-content-overlay__item";
+
+/* -------------------------------------------------------------------------- */
 /* Item chrome render-prop                                                    */
 /* -------------------------------------------------------------------------- */
 
