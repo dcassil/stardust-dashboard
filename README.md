@@ -119,6 +119,12 @@ Use it as the template for backing the dashboard with any versioned store.
 | `renderOverlayChrome?(parts)` | render-prop | override the overlay chrome (default: bundled `Overlays`). |
 | `children` | `ReactNode` | your palette/side-panel layer (defaults available). |
 
+`renderLayout` is the Option B escape hatch. When you supply it, your layout owns the region
+behaviors: the default landmarks, responsive sidebar collapse, and modal focus-trap / restore /
+Escape handling live in the region primitives composed by the default `AdminShell`, so
+`renderLayout` does not carry a byte-for-byte behavior guarantee. It is also bypassed in preview
+mode, where `HostShell` renders the full-bleed canvas directly.
+
 ### `ContentStoreAdapter`
 ```ts
 interface ContentStoreAdapter {

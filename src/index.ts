@@ -125,6 +125,53 @@ export type {
 } from "./layout";
 
 /* -------------------------------------------------------------------------- */
+/* Layout regions (DASH-T-0021)                                               */
+/* -------------------------------------------------------------------------- */
+
+export {
+  AdminShell,
+  Shell,
+  SD_SHELL_ROOT,
+  SD_TOPBAR,
+  SD_SIDEBAR,
+  SD_MAIN_CONTENT,
+  SD_SIDE_PANEL,
+  SD_MODAL_HOST,
+  SD_OVERLAY_LAYER,
+  SD_IFRAME_AREA,
+  SD_FOOTER,
+  SD_COMMAND_REGION,
+} from "./layout";
+export type {
+  AdminShellProps,
+  ShellSlots,
+  LayoutRegionName,
+  RegionProps,
+  EmptySlotContract,
+  LoadingSlotContract,
+  ModalContentContract,
+  AccountContract,
+  ActionAreaContract,
+  TopbarContract,
+  SidebarContract,
+  PageHeaderContract,
+  ContentWrapperContract,
+  ShellRootProps,
+  MainContentProps,
+  TopBarProps,
+  SidebarProps,
+  // `SidePanelProps` is already the (frozen) blocks side-panel props name, so the
+  // layout region's props are re-exported under a disambiguated name at the root.
+  SidePanelProps as ShellSidePanelProps,
+  ModalHostProps,
+  OverlayLayerProps,
+  IframeAreaProps,
+  FooterProps,
+  CommandRegionProps,
+  RegionMarker,
+} from "./layout";
+
+/* -------------------------------------------------------------------------- */
 /* Overlay chrome (SIFR-T-0035)                                               */
 /* -------------------------------------------------------------------------- */
 
