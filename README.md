@@ -162,6 +162,89 @@ interface BlockType {
 
 ---
 
+## Behavior layer — `AdminProvider` (0.2)
+
+The dashboard ships a **headless, UI-free behavior layer** (`AdminProvider`) that owns all
+non-visual admin state: editing (selection + session + imperative actions + lifecycle events),
+shared UI state (sidebar / modal / overlay / layout), and command + extension registries. The
+bundled `HostShell` is just one composition on top of it — **any** custom UI reaches the exact
+same capabilities via focused hooks, and the behavior works with **zero bundled UI**.
+
+### Surface
+
+| Hook | Returns |
+| --- | --- |
+| `useSelection()` | `{ selectedTargetId, selectedContentId, selectedRef }` |
+| `useEditingState()` | `{ isEditing, editingRef }` |
+| `useEditingActions()` | `{ select, startEditing, stopEditing, add, remove, move, change }` |
+| `useSidebarState()` | `{ open, collapsed, activeTab, setOpen, toggle, collapse, setActiveTab }` |
+| `useModalState()` | `{ stack, open(id, payload?), close(id?), isOpen(id) }` |
+| `useOverlayState()` | `{ mode, activeLayer, setMode, setActiveLayer }` — owns `edit`\|`preview` |
+| `useLayoutState()` | `{ visibleRegions, breakpoint, setRegionVisible }` |
+| `useRegisterCommand(cmd)` / `useCommands(ctx?)` | register / read `when`-filtered commands |
+| `useRegisterExtension(kind, contribution)` / `useExtensions(kind)` | `commands`\|`actions`\|`panels`\|`tools` |
+
+**Action → store-op mapping** (every action routes through the injected store's `apply`; content
+callbacks fire **post-commit, once each**):
+
+| Action | Store op | Events |
+| --- | --- | --- |
+| `select(ref\|null)` | `select` (inert) | `onSelect` |
+| `startEditing(ref)` | `select` (inert) | `onSelect`, `onEditingStart` |
+| `stopEditing()` | — | `onEditingStop` |
+| `add(op)` | `insert` | `onInsert`, `onContentChange`, `onSelect` (auto-select) |
+| `remove(op)` | `delete` | `onRemove`, `onContentChange` |
+| `move(op)` | `move` | `onMove`, `onContentChange` |
+| `change(op)` | `edit` | `onContentChange` |
+
+### Standalone example — drive editing with your own UI (no bundled overlay/panel)
+
+```tsx
+import { EditingProvider, useEditingActions, useEditingState } from "@stardust-cms/dashboard";
+
+function MyToolbar() {
+  const { startEditing, change, stopEditing } = useEditingActions();
+  const { isEditing } = useEditingState();
+  return (
+    <div>
+      <button onClick={() => startEditing({ targetId: "hero", contentId: "title" })}>Edit title</button>
+      <button onClick={() => {
+        change({ kind: "edit", targetId: "hero", contentId: "title", patch: { value: "Hello" } });
+        stopEditing();
+      }}>Save</button>
+      <span>{isEditing ? "editing" : "idle"}</span>
+    </div>
+  );
+}
+
+// `onEditingStart` opens your modal; `onContentChange` persists the draft — no bundled UI needed.
+<EditingProvider store={adapter} onEditingStart={openMyModal} onContentChange={saveDraft}>
+  <MyToolbar />
+</EditingProvider>
+```
+
+(This snippet is mirrored in `src/admin/usageExample.test.tsx`, which is compiled + run so it can't
+drift from the shipped API.)
+
+### Reserved seams (designed for later)
+
+`useRegisterExtension`/`useExtensions` accept four **implemented** kinds now —
+`commands` · `actions` · `panels` · `tools`. Four more are **reserved** in the types
+(`navigation` · `permissions` · `currentUser` · `resources`): registering one throws
+**"not implemented this round"** (and is flagged at compile time — its `ExtensionContribution`
+resolves to an uninhabitable type). They are reserved so future initiatives add
+`useNavigation`/`usePermissions`/`useCurrentUser`/`useResources` + their App-Shell mount points
+**additively**, with no breaking change to the registration API.
+
+### Back-compat
+
+`useHostSelection()` / `HostSelection` are unchanged — now fed from the controller's selection.
+Preview mode moved into the behavior layer: the dog-ear toggle drives
+`useOverlayState().setMode("preview")`, so overlay / app-shell / preview-toggle share one source of
+truth (`HostShell.previewable` still controls whether the affordance is shown).
+
+---
+
 ## Design
 
 The dashboard is deliberately **decoupled from any content store** — the shell package imports no
