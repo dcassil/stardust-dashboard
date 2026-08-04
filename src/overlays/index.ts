@@ -23,6 +23,10 @@ export {
   SD_CONTENT_OVERLAY_ITEM,
   SD_SELECTION_RING,
   SD_ACTIONS,
+  SD_EDIT_BUTTON,
+  SD_REMOVE_BUTTON,
+  SD_MOVE_HANDLE,
+  SD_INSERT_ZONE,
 } from "./overlaysTypes.js";
 export type {
   OverlaysProps,
@@ -43,3 +47,14 @@ export { SelectionRing } from "./SelectionRing.js";
 export type { SelectionRingProps } from "./SelectionRing.js";
 export { ContentOverlayActions } from "./Actions.js";
 export type { ContentOverlayActionsProps } from "./Actions.js";
+
+// DASH-T-0026 / DASH-T-0027 — standalone action primitives (usable inside
+// `<ContentOverlay.Actions>` or independently).
+export { EditButton } from "./EditButton.js";
+export type { EditButtonProps } from "./EditButton.js";
+export { RemoveButton } from "./RemoveButton.js";
+export type { RemoveButtonProps } from "./RemoveButton.js";
+export { MoveHandle } from "./MoveHandle.js";
+export type { MoveHandleProps } from "./MoveHandle.js";
+export { InsertZone } from "./InsertZone.js";
+export type { InsertZoneProps, InsertPayloadMapper } from "./InsertZone.js";
