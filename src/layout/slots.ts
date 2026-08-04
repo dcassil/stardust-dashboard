@@ -50,7 +50,14 @@ export function defaultLoading(contract: LoadingSlotContract): ReactNode {
  * fabricating user chrome.
  */
 export function defaultAccount(): ReactNode {
-  return createElement("div", { className: "sd-account", "aria-label": "Account" });
+  // `role="group"` makes the `aria-label` valid (an `aria-label` on a role-less
+  // div is prohibited — WCAG 4.1.2); the group is the labelled placeholder a
+  // future `useCurrentUser` fills additively.
+  return createElement("div", {
+    className: "sd-account",
+    role: "group",
+    "aria-label": "Account",
+  });
 }
 
 /** `action-area` default: a toolbar of command buttons + rendered tool handles. */

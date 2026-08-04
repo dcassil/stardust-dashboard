@@ -109,6 +109,44 @@ describe("DASH-T-0017 — ModalHost focus-trap + restore + Escape (TC-001)", () 
     expect(container.querySelector('[data-modal-id="edit"]')).toBeNull();
     expect(document.activeElement).toBe(trigger);
   });
+
+  it("keeps focus on the dialog when modal content has no focusable controls", () => {
+    const modal: { current: ModalState | null } = { current: null };
+    function Capture(): ReactNode {
+      const modalValue = useModalState();
+      useEffect(() => {
+        modal.current = modalValue;
+      });
+      return null;
+    }
+    const emptyBodySlots: Partial<ShellSlots> = {
+      "modal-content": (c) => <div data-testid={`body-${c.id}`}>empty</div>,
+    };
+
+    const { container } = render(
+      <AdminProvider store={fakeStore}>
+        <Capture />
+        <ModalHost className="extra" style={{ minHeight: 10 }} slots={emptyBodySlots} />
+      </AdminProvider>,
+    );
+    const host = container.querySelector<HTMLElement>(`.${SD_MODAL_HOST}`);
+    expect(host).not.toBeNull();
+    expect(host?.classList.contains("extra")).toBe(true);
+    expect(host?.style.minHeight).toBe("10px");
+
+    act(() => {
+      modal.current?.open("empty");
+    });
+
+    const dialog = container.querySelector<HTMLDivElement>('[data-modal-id="empty"]');
+    expect(dialog).not.toBeNull();
+    expect(document.activeElement).toBe(dialog);
+
+    act(() => {
+      fireEventKeyDown(dialog, "Tab");
+    });
+    expect(document.activeElement).toBe(dialog);
+  });
 });
 
 describe("DASH-T-0017 — ModalHost stack + role/aria (TC-002)", () => {

@@ -62,6 +62,7 @@ vi.mock("../shell/useSendElements.js", () => ({ useSendElements: () => stableSen
 const { CanvasProvider } = await import("../shell");
 const { AdminProvider } = await import("../admin");
 const { MainContent } = await import("./MainContent.js");
+const { IframeArea } = await import("./IframeArea.js");
 
 function payload(
   targetId: string,
@@ -138,6 +139,39 @@ describe("DASH-T-0015 — MainContent structure + slot gating (TC-002)", () => {
     hostState.connectionState = "connecting";
     const { container } = renderShell(createFakeAdapter());
     expect(container.textContent).toContain("Loading…");
+  });
+
+  it("applies consumer className/style on the main region", () => {
+    const { container } = render(
+      <AdminProvider store={createFakeAdapter()}>
+        <CanvasProvider config={config}>
+          <MainContent className="extra" style={{ minHeight: 300 }} />
+        </CanvasProvider>
+      </AdminProvider>,
+    );
+
+    const main = container.querySelector<HTMLElement>(".sd-main-content");
+    expect(main).not.toBeNull();
+    expect(main?.classList.contains("extra")).toBe(true);
+    expect(main?.style.minHeight).toBe("300px");
+  });
+
+  it("applies consumer className/style on the iframe area", () => {
+    const { container } = render(
+      <AdminProvider store={createFakeAdapter()}>
+        <CanvasProvider config={config}>
+          <IframeArea className="extra" style={{ width: 320 }}>
+            <div data-testid="iframe-child" />
+          </IframeArea>
+        </CanvasProvider>
+      </AdminProvider>,
+    );
+
+    const iframeArea = container.querySelector<HTMLElement>(".sd-iframe-area");
+    expect(iframeArea).not.toBeNull();
+    expect(iframeArea?.classList.contains("extra")).toBe(true);
+    expect(iframeArea?.style.width).toBe("320px");
+    expect(container.querySelector('[data-testid="iframe-child"]')).not.toBeNull();
   });
 });
 

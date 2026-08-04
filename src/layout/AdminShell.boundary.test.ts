@@ -53,4 +53,28 @@ describe("DASH-T-0019 — level-1 module-boundary proof (source scan, TC-001)", 
     expect(files).toContain("MainContent.tsx");
     expect(files.length).toBeGreaterThanOrEqual(10);
   });
+
+  // DASH-T-0022 strengthening: the source-scan above is the belt; the
+  // `layout-public-entry-only` depcruise rule is the suspenders. Assert the
+  // graph-level rule is actually declared (and points at src/layout with the
+  // barrel-only carve-out) so neither half can silently disappear, and that the
+  // full public region cluster — the compound namespace + the thin HostShell
+  // wrapper (DASH-T-0020) + the turnkey shell — is inside the scanned surface.
+  it("declares the layout-public-entry-only depcruise rule that mirrors the scan", () => {
+    const config = readFileSync(
+      join(process.cwd(), ".dependency-cruiser.cjs"),
+      "utf8",
+    );
+    expect(config).toContain("layout-public-entry-only");
+    expect(config).toContain("^src/layout/");
+    // The rule permits only barrel imports of other layers (index.ts carve-out).
+    expect(config).toContain("overlays|shell)/index");
+  });
+
+  it("covers the full public region cluster (Shell namespace + HostShell + AdminShell)", () => {
+    const files = layoutSourceFiles();
+    for (const name of ["Shell.ts", "HostShell.tsx", "AdminShell.tsx", "ModalHost.tsx"]) {
+      expect(files).toContain(name);
+    }
+  });
 });

@@ -28,4 +28,11 @@ describe("DASH-T-0016 — SidePanel hosts panels in a complementary landmark", (
     expect(aside?.classList.contains("extra")).toBe(true);
     expect(getByTestId("panel")).not.toBeNull();
   });
+
+  it("applies consumer style when provided", () => {
+    const { container } = render(<SidePanel style={{ width: 280 }} />);
+    const aside = container.querySelector<HTMLElement>(`.${SD_SIDE_PANEL}`);
+    expect(aside).not.toBeNull();
+    expect(aside?.style.width).toBe("280px");
+  });
 });

@@ -113,6 +113,22 @@ describe("DASH-T-0018 — TopBar registry-read seams + stub content (TC-001)", (
       container.querySelector(".sd-topbar__status")?.getAttribute("data-state"),
     ).toBe("connecting");
   });
+
+  it("applies consumer className/style to the banner region", () => {
+    hostState.connectionState = "connected";
+    const { container } = render(
+      <AdminProvider store={fakeStore}>
+        <CanvasProvider config={config}>
+          <TopBar className="extra" style={{ minHeight: 44 }} />
+        </CanvasProvider>
+      </AdminProvider>,
+    );
+
+    const banner = container.querySelector<HTMLElement>('.sd-topbar[role="banner"]');
+    expect(banner).not.toBeNull();
+    expect(banner?.classList.contains("extra")).toBe(true);
+    expect(banner?.style.minHeight).toBe("44px");
+  });
 });
 
 describe("DASH-T-0018 — TopBar reserved-navigation read is a no-op", () => {
