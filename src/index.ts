@@ -193,6 +193,62 @@ export type {
 } from "./overlays";
 
 /* -------------------------------------------------------------------------- */
+/* Composable content overlay (DASH-I-0002)                                   */
+/* -------------------------------------------------------------------------- */
+
+// The compound overlay + standalone action primitives (DASH-T-0023…0029). All
+// ADDITIVE — the bundled `Overlays` above is unchanged. The compound parts route
+// select/edit/remove/move/add through the DASH-I-0001 editing controller
+// (`useEditingActions`), so they require an `AdminProvider`; they are geometry-
+// free (they consume already-mapped `child.geometry`, never recompute it).
+//
+// The canonical zero-fork composition (Use Case 1) — a consumer drops a custom
+// control into the `.Actions` slot and it reaches the same capabilities as the
+// default buttons, positioned over the item, with no forking:
+//
+//   <ContentOverlay target={mappedTarget}>
+//     <ContentOverlay.SelectionRing />
+//     <ContentOverlay.Actions>
+//       <EditButton onClick={() => openMyModal(target)} />
+//       <RemoveButton />
+//     </ContentOverlay.Actions>
+//   </ContentOverlay>
+//
+// Children read the item via `useContentOverlayContext()` (`{ target, child,
+// ref }`) — the stable, documented slot contract — plus the frozen editing
+// hooks. Every primitive is default-styled via `sd-*` class hooks (styled by
+// DASH-I-0004) and also usable standalone with an explicit `itemRef`/`target`.
+export {
+  ContentOverlay,
+  useContentOverlayContext,
+  SelectionRing,
+  ContentOverlayActions,
+  EditButton,
+  RemoveButton,
+  MoveHandle,
+  InsertZone,
+  SD_CONTENT_OVERLAY,
+  SD_CONTENT_OVERLAY_ITEM,
+  SD_SELECTION_RING,
+  SD_ACTIONS,
+  SD_EDIT_BUTTON,
+  SD_REMOVE_BUTTON,
+  SD_MOVE_HANDLE,
+  SD_INSERT_ZONE,
+} from "./overlays";
+export type {
+  ContentOverlayProps,
+  ContentOverlayContextValue,
+  SelectionRingProps,
+  ContentOverlayActionsProps,
+  EditButtonProps,
+  RemoveButtonProps,
+  MoveHandleProps,
+  InsertZoneProps,
+  InsertPayloadMapper,
+} from "./overlays";
+
+/* -------------------------------------------------------------------------- */
 /* Block registry (SIFR-T-0034)                                               */
 /* -------------------------------------------------------------------------- */
 
