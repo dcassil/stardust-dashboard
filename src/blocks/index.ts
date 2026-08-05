@@ -31,7 +31,11 @@ export type {
 export { Palette } from "./Palette.js";
 export type { PaletteProps } from "./Palette.js";
 export { SidePanel } from "./SidePanel.js";
-export type { SidePanelProps } from "./SidePanel.js";
+export type {
+  SidePanelProps,
+  SidePanelSectionProps,
+  SidePanelContentViewProps,
+} from "./SidePanel.js";
 // DASH-T-0031/0032/0037 — composable panel surface (controller-routed).
 // Root re-export lands in DASH-T-0041.
 export { FieldEditor } from "./FieldEditor.js";
