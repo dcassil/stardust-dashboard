@@ -10,6 +10,7 @@ export type {
   BlockType,
   BlockTypeRegistry,
   BlockFieldPatch,
+  StyleField,
 } from "./BlockType.js";
 export { findBlockType } from "./BlockType.js";
 export {
@@ -31,10 +32,18 @@ export { Palette } from "./Palette.js";
 export type { PaletteProps } from "./Palette.js";
 export { SidePanel } from "./SidePanel.js";
 export type { SidePanelProps } from "./SidePanel.js";
-// DASH-T-0031 — the standalone field-editing core (controller-routed). Root
-// re-export + the rest of the panel surface land in DASH-T-0041.
+// DASH-T-0031/0032/0037 — composable panel surface (controller-routed).
+// Root re-export lands in DASH-T-0041.
 export { FieldEditor } from "./FieldEditor.js";
 export type { FieldEditorProps } from "./FieldEditor.js";
+export { EditPanel } from "./EditPanel.js";
+export type { EditPanelProps } from "./EditPanel.js";
+export { PresenceIndicator } from "./PresenceIndicator.js";
+export type {
+  PresenceIndicatorProps,
+  PresenceSource,
+  RemotePresence,
+} from "./PresenceIndicator.js";
 export { safeLocalStorage } from "./safeLocalStorage.js";
 export type { SafeLocalStorage } from "./safeLocalStorage.js";
 export {

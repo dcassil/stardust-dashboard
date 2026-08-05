@@ -26,8 +26,29 @@ import type { EditOp } from "../store";
  * The patch a {@link BlockType.renderField} editor emits. Identical to the
  * store's {@link EditOp} `patch` so an editor's `onEdit(patch)` can be forwarded
  * verbatim into an `edit` op — the registry drives editing, not just display.
+ *
+ * Style edits use this SAME vehicle (no new store op, DASH-T-0035): `EditOp.patch`
+ * already carries `styleGroup` + arbitrary style fields, so a `styleSchema` field
+ * or a `renderStyle` editor emits a `BlockFieldPatch` exactly like a field editor.
  */
 export type BlockFieldPatch = EditOp["patch"];
+
+/**
+ * One editable style property in a block's declarative {@link BlockType.styleSchema}
+ * (DASH-T-0035). `<StylePanel>` (DASH-T-0036) renders a control per entry and emits
+ * a {@link BlockFieldPatch} keyed by `key`. Declarative schema is the common case;
+ * a block needing bespoke style UI uses {@link BlockType.renderStyle} instead.
+ */
+export interface StyleField {
+  /** The patch key this control edits (e.g. `"color"`, `"align"`). */
+  key: string;
+  /** Human-readable control label. */
+  label: string;
+  /** The control kind `<StylePanel>` renders. */
+  kind: "text" | "number" | "color" | "select";
+  /** Allowed values for `kind: "select"`. Ignored otherwise. */
+  options?: readonly string[];
+}
 
 /**
  * One kind of content block the editor understands.
@@ -59,6 +80,24 @@ export interface BlockType<TType extends string = string> {
     content: CmsContent,
     onEdit: (patch: BlockFieldPatch) => void,
   ): ReactNode;
+  /**
+   * Bespoke style editor for `<StylePanel>` (DASH-T-0035), symmetric with
+   * {@link renderField}: receives the current {@link CmsContent} + an `onEdit`
+   * taking a {@link BlockFieldPatch} (style edits ride the same `EditOp.patch`).
+   * Use this for custom style UI; for simple property lists prefer the
+   * declarative {@link styleSchema}. When BOTH are present `<StylePanel>` prefers
+   * `renderStyle`; when NEITHER, the block yields a no-op (empty) style panel.
+   */
+  renderStyle?(
+    content: CmsContent,
+    onEdit: (patch: BlockFieldPatch) => void,
+  ): ReactNode;
+  /**
+   * Declarative list of editable style properties (DASH-T-0035). `<StylePanel>`
+   * renders one control per {@link StyleField} and emits a `BlockFieldPatch`
+   * keyed by the field's `key`. Absent → no declarative style controls.
+   */
+  styleSchema?: readonly StyleField[];
 }
 
 /**
