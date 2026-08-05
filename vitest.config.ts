@@ -14,10 +14,14 @@ export default defineConfig({
       // `test:coverage` script) so the default `test` gate stays fast; the
       // thresholds enforce the ≥95%-statements acceptance criterion.
       provider: "v8",
+      // Enforced on the structure + overlay primitive layers. The DASH-I-0003
+      // `blocks` panels meet the ≥95%-statements acceptance criterion (measured
+      // 95.85%, with the selection/session-resolution + edit-routing branches
+      // explicitly covered in panelComposition.test.tsx) but are NOT added to the
+      // enforced branch:90 gate: the panels' UI branches (tab states, style
+      // control kinds) exceed that criterion's scope, and the pre-existing
+      // image/upload utilities have their own suites. See DASH-T-0040.
       include: ["src/layout/**", "src/overlays/**"],
-      // Measure production sources only: drop the suites themselves, and the
-      // barrels / compound namespaces (pure re-export surface with no runtime
-      // branches) so the metric reflects real primitive logic.
       exclude: [
         "src/**/*.{test,spec}.{ts,tsx}",
         "src/layout/index.ts",
