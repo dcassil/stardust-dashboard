@@ -245,14 +245,21 @@ export default tseslint.config(
               message:
                 "Boundary violation: '{{from.type}}' may import only store/editing, and only through its public entry (index.ts), not file '{{to.internalPath}}'.",
             },
-            // Blocks consume only the store seam, via its public entry.
+            // Blocks consume the store seam AND the editing behavior barrel
+            // (DASH-I-0003 NFR-001: the panels route field edits through
+            // useEditingActions().change), each via its public entry.
             {
               from: { element: { type: "blocks" } },
               allow: {
-                to: { element: { type: "store", fileInternalPath: "index.ts" } },
+                to: {
+                  element: {
+                    types: { anyOf: ["store", "editing"] },
+                    fileInternalPath: "index.ts",
+                  },
+                },
               },
               message:
-                "Boundary violation: '{{from.type}}' may import only the store seam, and only through its public entry (index.ts), not file '{{to.internalPath}}'.",
+                "Boundary violation: '{{from.type}}' may import only store/editing, and only through its public entry (index.ts), not file '{{to.internalPath}}'.",
             },
             // The store seam (NFR-001) imports no other internal layer. No allow
             // policy → any cross-layer import from store hits the default disallow.
