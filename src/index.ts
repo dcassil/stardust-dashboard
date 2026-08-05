@@ -237,15 +237,9 @@ export {
   SD_INSERT_ZONE,
 } from "./overlays";
 export type {
-  ContentOverlayProps,
-  ContentOverlayContextValue,
-  SelectionRingProps,
-  ContentOverlayActionsProps,
-  EditButtonProps,
-  RemoveButtonProps,
-  MoveHandleProps,
-  InsertZoneProps,
-  InsertPayloadMapper,
+  ContentOverlayProps, ContentOverlayContextValue, SelectionRingProps,
+  ContentOverlayActionsProps, EditButtonProps, RemoveButtonProps,
+  MoveHandleProps, InsertZoneProps, InsertPayloadMapper,
 } from "./overlays";
 
 /* -------------------------------------------------------------------------- */
@@ -278,4 +272,32 @@ export {
   safeLocalStorage,
   Palette,
   SidePanel,
+} from "./blocks";
+
+/* -------------------------------------------------------------------------- */
+/* Composable sidebar + editing panels (DASH-I-0003)                          */
+/* -------------------------------------------------------------------------- */
+
+// The placement-agnostic panels: `FieldEditor`/`EditPanel`/`StylePanel` route
+// edits through the DASH-I-0001 controller (`useEditingActions().change`); the
+// compound `Sidebar` binds to `useSidebarState()`; `SidePanel` is a compound
+// (`.Section`/`.Content`, selection defaulting from `useSelection()`, props win);
+// `PresenceIndicator` is a data-agnostic presence mount. All emit `sd-*` hooks
+// (single-sourced in the panel catalog) and require an `AdminProvider`. Additive
+// — the existing `Palette`/`SidePanel`/`BlockType` surface is unchanged.
+// NOTE: `SD_SIDE_PANEL` is already exported (the layout region hook, same class
+// string), so it is not re-exported here.
+export {
+  FieldEditor, EditPanel, StylePanel, PresenceIndicator, Sidebar,
+  SD_PANEL_SECTION, SD_EDIT_PANEL, SD_FIELD_EDITOR, SD_STYLE_PANEL,
+  SD_PRESENCE, SD_PALETTE,
+} from "./blocks";
+export type {
+  StyleField, FieldEditorProps, EditPanelProps, StylePanelProps,
+  SidePanelSectionProps, SidePanelContentViewProps,
+  PresenceIndicatorProps, PresenceSource, RemotePresence,
+  SidebarBodyProps, SidebarButtonProps, SidebarNavigationChildren,
+  SidebarNavigationContract, SidebarNavigationProps, SidebarRegionChildren,
+  SidebarRegionContract, SidebarRegionProps, SidebarRootProps,
+  SidebarTab, SidebarTabContentProps, SidebarTabsProps,
 } from "./blocks";
