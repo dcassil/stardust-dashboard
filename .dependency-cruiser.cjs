@@ -83,8 +83,9 @@ module.exports = {
     {
       name: "blocks-only-store",
       comment:
-        "The blocks layer may only import the store seam (via its public entry). " +
-        "It must not reach into overlays or shell.",
+        "The blocks layer may import the store seam and the editing behavior " +
+        "barrel (DASH-I-0003 NFR-001), via their public entries. It must not " +
+        "reach into overlays or shell.",
       severity: "error",
       from: { path: "^src/blocks/", pathNot: "\\.(test|spec)\\.[tj]sx?$" },
       to: { path: "^src/(overlays|shell)/" },

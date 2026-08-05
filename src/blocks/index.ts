@@ -31,6 +31,10 @@ export { Palette } from "./Palette.js";
 export type { PaletteProps } from "./Palette.js";
 export { SidePanel } from "./SidePanel.js";
 export type { SidePanelProps } from "./SidePanel.js";
+// DASH-T-0031 — the standalone field-editing core (controller-routed). Root
+// re-export + the rest of the panel surface land in DASH-T-0041.
+export { FieldEditor } from "./FieldEditor.js";
+export type { FieldEditorProps } from "./FieldEditor.js";
 export { safeLocalStorage } from "./safeLocalStorage.js";
 export type { SafeLocalStorage } from "./safeLocalStorage.js";
 export {
