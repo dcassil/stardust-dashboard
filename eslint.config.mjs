@@ -245,15 +245,16 @@ export default tseslint.config(
               message:
                 "Boundary violation: '{{from.type}}' may import only store/editing, and only through its public entry (index.ts), not file '{{to.internalPath}}'.",
             },
-            // Blocks consume the store seam AND the editing behavior barrel
-            // (DASH-I-0003 NFR-001: the panels route field edits through
-            // useEditingActions().change), each via its public entry.
+            // Blocks consume the store seam, the editing behavior barrel, AND
+            // the admin behavior barrel (DASH-I-0003: panels route field edits
+            // through useEditingActions().change and the compound Sidebar binds
+            // to useSidebarState()), each via its public entry.
             {
               from: { element: { type: "blocks" } },
               allow: {
                 to: {
                   element: {
-                    types: { anyOf: ["store", "editing"] },
+                    types: { anyOf: ["store", "editing", "admin"] },
                     fileInternalPath: "index.ts",
                   },
                 },
