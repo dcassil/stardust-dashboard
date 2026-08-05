@@ -1,135 +1,164 @@
 /**
- * Registry-driven content side panel (SIFR-T-0034, REQ-004).
+ * DASH-T-0034 — the composable content side panel.
  *
- * The reusable generalization of the demo's `SidePanel` (which switched on
- * `text`/`image` to pick a field editor). Given the current selection
- * (`selectedTargetId` / `selectedContentId`) it finds the selected item in the
- * store snapshot, looks its `type` up in the injected `blockTypes` registry, and
- * renders that block's `renderField(content, onEdit)`. When the block supplies no
- * `renderField` it falls back to a generic text field bound to `content.value`;
- * an unknown type still resolves an item and gets the generic field (graceful
- * fallback, not a crash).
+ * `SidePanel` is now a COMPOUND: `<SidePanel.Section title>` wraps arbitrary
+ * children as a titled section, and `<SidePanel.Content>` is the selection-aware
+ * content view that DEFAULTS its selection from `useSelection()` while still
+ * accepting explicit `selectedTargetId`/`selectedContentId`/`snapshot` overrides
+ * (props win). It is placement-agnostic (a `Sidebar.Body`, a `ModalHost`, or a
+ * bare div).
  *
- * Edits route through the store: every `onEdit(patch)` becomes an `edit`
- * {@link EditOp} applied via `useContentStore().apply` — so the registry drives
- * editing, not just display (TC-002). The snapshot + selection are read from the
- * store context by default; they may also be passed explicitly for testing or
- * custom composition.
+ * BACK-COMPAT: the bundled `SidePanel(props)` keeps its original behavior —
+ * given explicit selection props it renders the store-routed content view
+ * (`SidePanelContent`), so the frozen `SidePanel.test.tsx` (mounted under
+ * `StoreProvider` ONLY, asserting synchronous store ops) passes unchanged. The
+ * key is the `undefined`-vs-provided distinction: selection props that are
+ * OMITTED (`undefined`) opt into the `useSelection()` default (which needs an
+ * `AdminProvider`); selection props that are PROVIDED — even `null` — use the
+ * controlled, provider-free store path. See `sidePanelContent.tsx` for why the
+ * bundled panel stays store-routed rather than delegating to the controller.
  */
 
-import type { ChangeEvent, ReactNode } from "react";
-import type { CmsContent } from "@stardust-cms/iframe-adapter/protocol";
-import { useContentStore } from "../store";
+import type { CSSProperties, ReactNode } from "react";
+import { useSelection } from "../editing";
 import type { ContentSnapshot } from "../store";
-import type { BlockFieldPatch, BlockTypeRegistry } from "./BlockType.js";
-import { findBlockType } from "./BlockType.js";
+import type { BlockTypeRegistry } from "./BlockType.js";
+import { SD_PANEL_SECTION } from "./panelTypes.js";
+import { SidePanelContent } from "./sidePanelContent.js";
+
+/** Merge a base class with an optional consumer class. */
+function joinClasses(base: string, extra: string | undefined): string {
+  return extra ? `${base} ${extra}` : base;
+}
 
 export interface SidePanelProps {
   /** The block-type registry used to resolve the selected item's field editor. */
   blockTypes: BlockTypeRegistry;
-  /**
-   * The snapshot to resolve the selection against. Defaults to the live snapshot
-   * from {@link useContentStore}.
-   */
+  /** The snapshot to resolve the selection against. Defaults to the live snapshot. */
   snapshot?: ContentSnapshot;
-  /** The selected target id, or `null` when nothing is selected. */
-  selectedTargetId: string | null;
-  /** The selected content id, or `null` when nothing is selected. */
-  selectedContentId: string | null;
+  /**
+   * The selected target id. OMIT (undefined) to default from `useSelection()`;
+   * pass a value or `null` to control it (provider-free store path). Optional
+   * since DASH-T-0034 (was required) — additive/back-compatible.
+   */
+  selectedTargetId?: string | null;
+  /** The selected content id. Same omit-to-default semantics as `selectedTargetId`. */
+  selectedContentId?: string | null;
+  /** Compound children (Sections). When present, `SidePanel` is a container. */
+  children?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 }
 
-/** Find the selected payload in a snapshot, honoring an optional target filter. */
-function findSelected(
-  snapshot: ContentSnapshot,
-  selectedTargetId: string | null,
-  selectedContentId: string | null,
-): ContentSnapshot[number] | undefined {
-  if (selectedContentId === null) {
-    return undefined;
-  }
-  return snapshot.find(
-    (p) =>
-      p.content.id === selectedContentId &&
-      (selectedTargetId === null || p.targetId === selectedTargetId),
-  );
+export interface SidePanelSectionProps {
+  /** The section heading. */
+  title: string;
+  children?: ReactNode;
+  className?: string;
+  style?: CSSProperties;
 }
 
-/** The generic text field used when a block supplies no `renderField`. */
-function DefaultField({
-  content,
-  onEdit,
-}: {
-  content: CmsContent;
-  onEdit: (patch: BlockFieldPatch) => void;
-}): ReactNode {
-  const handleChange = (
-    e: ChangeEvent<HTMLTextAreaElement>,
-  ): void => {
-    onEdit({ value: e.target.value });
-  };
+export interface SidePanelContentViewProps {
+  blockTypes: BlockTypeRegistry;
+  snapshot?: ContentSnapshot;
+  selectedTargetId?: string | null;
+  selectedContentId?: string | null;
+  className?: string;
+  style?: CSSProperties;
+}
+
+/** A titled section wrapping arbitrary children; composes in any order. */
+function SidePanelSection({
+  title,
+  children,
+  className,
+  style,
+}: SidePanelSectionProps): ReactNode {
   return (
-    <label className="panel__field">
-      <span>Value</span>
-      <textarea
-        rows={4}
-        value={content.value ?? ""}
-        onChange={handleChange}
-        data-testid="panel-default-field"
-      />
-    </label>
+    <section
+      className={joinClasses(`${SD_PANEL_SECTION} panel`, className)}
+      {...(style ? { style } : {})}
+    >
+      <h3 className="panel__title">{title}</h3>
+      {children}
+    </section>
   );
 }
 
 /**
- * The selection-aware side panel. Resolves the selected item's block type and
- * renders its editor, wiring edits to `store.apply` as `edit` ops.
+ * The selection-aware content view: defaults selection from `useSelection()`,
+ * props override. Split so `useSelection()` (which needs an `AdminProvider`) is
+ * called ONLY on the auto path — the controlled path stays provider-free.
  */
-export function SidePanel({
-  blockTypes,
-  snapshot,
-  selectedTargetId,
-  selectedContentId,
-}: SidePanelProps): ReactNode {
-  const { snapshot: liveSnapshot, apply } = useContentStore();
-  const effectiveSnapshot = snapshot ?? liveSnapshot;
-
-  const selected = findSelected(
-    effectiveSnapshot,
-    selectedTargetId,
-    selectedContentId,
-  );
-
-  if (!selected) {
+function SidePanelContentView(props: SidePanelContentViewProps): ReactNode {
+  const providedSelection =
+    props.selectedTargetId !== undefined ||
+    props.selectedContentId !== undefined;
+  if (providedSelection) {
     return (
-      <section className="panel">
-        <h2 className="panel__title">Content</h2>
-        <p className="panel__hint">Click a block in the preview to edit it.</p>
-      </section>
+      <SidePanelContent
+        blockTypes={props.blockTypes}
+        selectedTargetId={props.selectedTargetId ?? null}
+        selectedContentId={props.selectedContentId ?? null}
+        {...(props.snapshot ? { snapshot: props.snapshot } : {})}
+        {...(props.className ? { className: props.className } : {})}
+        {...(props.style ? { style: props.style } : {})}
+      />
     );
   }
+  return <SidePanelAutoContent {...props} />;
+}
 
-  const { content, targetId } = selected;
-  const blockType = findBlockType(blockTypes, content.type);
-
-  const onEdit = (patch: BlockFieldPatch): void => {
-    apply({ kind: "edit", targetId, contentId: content.id, patch });
-  };
-
+/** The `useSelection()`-defaulting content view (needs an `AdminProvider`). */
+function SidePanelAutoContent(props: SidePanelContentViewProps): ReactNode {
+  const { selectedTargetId, selectedContentId } = useSelection();
   return (
-    <section className="panel" data-selected-id={content.id}>
-      <h2 className="panel__title">Content</h2>
-      <dl className="panel__meta">
-        <dt>id</dt>
-        <dd>{content.id}</dd>
-        <dt>type</dt>
-        <dd>{content.type}</dd>
-        <dt>target</dt>
-        <dd>{targetId}</dd>
-      </dl>
-
-      {blockType?.renderField
-        ? blockType.renderField(content, onEdit)
-        : <DefaultField content={content} onEdit={onEdit} />}
-    </section>
+    <SidePanelContent
+      blockTypes={props.blockTypes}
+      selectedTargetId={selectedTargetId}
+      selectedContentId={selectedContentId}
+      {...(props.snapshot ? { snapshot: props.snapshot } : {})}
+      {...(props.className ? { className: props.className } : {})}
+      {...(props.style ? { style: props.style } : {})}
+    />
   );
 }
+
+/**
+ * The compound side panel. With `children` it is a container; otherwise it is the
+ * selection-content view (controlled when selection props are provided, else
+ * defaulting from `useSelection()`).
+ */
+function SidePanelRoot(props: SidePanelProps): ReactNode {
+  if (props.children !== undefined) {
+    return (
+      <div
+        className={joinClasses("sd-side-panel", props.className)}
+        {...(props.style ? { style: props.style } : {})}
+      >
+        {props.children}
+      </div>
+    );
+  }
+  return (
+    <SidePanelContentView
+      blockTypes={props.blockTypes}
+      {...(props.snapshot ? { snapshot: props.snapshot } : {})}
+      {...(props.selectedTargetId !== undefined
+        ? { selectedTargetId: props.selectedTargetId }
+        : {})}
+      {...(props.selectedContentId !== undefined
+        ? { selectedContentId: props.selectedContentId }
+        : {})}
+      {...(props.className ? { className: props.className } : {})}
+      {...(props.style ? { style: props.style } : {})}
+    />
+  );
+}
+
+export const SidePanel = Object.assign(SidePanelRoot, {
+  Section: SidePanelSection,
+  // `.Content` honors explicit selection props (props win), else defaults from
+  // `useSelection()` — the same dispatch the bare `SidePanel` uses.
+  Content: SidePanelContentView,
+});
