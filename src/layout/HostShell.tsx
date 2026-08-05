@@ -51,8 +51,8 @@
 import { useMemo } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import { FrameLinkProvider } from "frame-link-react";
-import type { ConnectionState } from "@stardust-cms/iframe-adapter/host";
 import { AdminProvider } from "../admin";
+import type { BlockTypeRegistry } from "../blocks";
 import { CanvasProvider, useCanvas } from "../shell";
 import type { CanvasConfig } from "../shell";
 import { AdminShell } from "./AdminShell.js";
@@ -61,6 +61,7 @@ import { OverlayLayer } from "./OverlayLayer.js";
 import { ConnectionStatus } from "./ConnectionStatus.js";
 import { HostSelectionContext } from "./HostSelectionContext.js";
 import { defaultRenderOverlayChrome } from "./defaultSlots.js";
+import { useRegisterDefaultPanels } from "./hostDefaultPanels.js";
 import {
   DEFAULT_DESIGN_HEIGHT,
   DEFAULT_DESIGN_WIDTH,
@@ -133,6 +134,7 @@ export function HostShell(props: HostShellProps): ReactNode {
           <HostShellBody
             iframeOrigin={iframeOrigin}
             editable={editable}
+            blockTypes={blockTypes}
             renderStatus={renderStatus}
             renderLayout={renderLayout}
             renderOverlayChrome={renderOverlayChrome}
@@ -148,6 +150,7 @@ export function HostShell(props: HostShellProps): ReactNode {
 interface HostShellBodyProps {
   iframeOrigin: string;
   editable: boolean;
+  blockTypes: BlockTypeRegistry;
   renderStatus: HostShellProps["renderStatus"];
   renderLayout: HostShellProps["renderLayout"];
   renderOverlayChrome: (parts: OverlayChromeParts) => ReactNode;
@@ -162,11 +165,15 @@ interface HostShellBodyProps {
 function HostShellBody({
   iframeOrigin,
   editable,
+  blockTypes,
   renderStatus,
   renderLayout,
   renderOverlayChrome,
   children,
 }: HostShellBodyProps): ReactNode {
+  // DASH-T-0038: register the bundled default sidebar (palette + content panel).
+  useRegisterDefaultPanels(blockTypes, editable);
+
   const {
     connectionState,
     effectiveScale,
@@ -179,9 +186,15 @@ function HostShellBody({
     selectedContentId,
   } = useCanvas();
 
-  const status = renderStatus
-    ? renderStatus(connectionState, effectiveScale)
-    : renderDefaultStatus(connectionState, effectiveScale, iframeOrigin);
+  const status = renderStatus ? (
+    renderStatus(connectionState, effectiveScale)
+  ) : (
+    <ConnectionStatus
+      state={connectionState}
+      scale={effectiveScale}
+      siteOrigin={iframeOrigin}
+    />
+  );
 
   const overlayChrome = renderOverlayChrome({
     targets,
@@ -232,15 +245,6 @@ function HostShellBody({
       {body}
     </HostSelectionContext.Provider>
   );
-}
-
-/** The default `renderStatus`: the bundled {@link ConnectionStatus} strip. */
-function renderDefaultStatus(
-  state: ConnectionState,
-  scale: number,
-  siteOrigin: string,
-): ReactNode {
-  return <ConnectionStatus state={state} scale={scale} siteOrigin={siteOrigin} />;
 }
 
 interface ComposeBodyArgs {
