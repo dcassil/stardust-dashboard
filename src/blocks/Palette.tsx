@@ -14,6 +14,7 @@
 import type { DragEvent, ReactNode } from "react";
 import { DATA_TRANSFER_KEYS } from "@stardust-cms/iframe-adapter/host";
 import type { BlockType, BlockTypeRegistry } from "./BlockType.js";
+import { SD_PALETTE } from "./panelTypes.js";
 
 export interface PaletteProps {
   /** The block-type registry to render. An empty registry renders no entries. */
@@ -55,7 +56,7 @@ export function Palette({ blockTypes, editable = true }: PaletteProps): ReactNod
           ? "Drag a block onto any target (including a container column)."
           : "Editing is disabled for this read-only view."}
       </p>
-      <div className="palette">
+      <div className={`palette ${SD_PALETTE}`}>
         {blockTypes.map((block) => (
           <div
             key={block.type}

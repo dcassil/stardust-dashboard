@@ -44,6 +44,35 @@ export type {
   PresenceSource,
   RemotePresence,
 } from "./PresenceIndicator.js";
+// DASH-T-0033 — compound Sidebar shell (+ parts) and its part contracts.
+export { Sidebar } from "./Sidebar.js";
+export type {
+  SidebarBodyProps,
+  SidebarButtonProps,
+  SidebarNavigationChildren,
+  SidebarNavigationContract,
+  SidebarNavigationProps,
+  SidebarRegionChildren,
+  SidebarRegionContract,
+  SidebarRegionProps,
+  SidebarRootProps,
+  SidebarTab,
+  SidebarTabContentProps,
+  SidebarTabsProps,
+} from "./Sidebar.js";
+// DASH-T-0036 — schema-driven style panel.
+export { StylePanel } from "./StylePanel.js";
+export type { StylePanelProps } from "./StylePanel.js";
+// DASH-T-0039 — single-source panel sd-* class-hook catalog (DASH-I-0004 styles).
+export {
+  SD_SIDE_PANEL,
+  SD_PANEL_SECTION,
+  SD_EDIT_PANEL,
+  SD_FIELD_EDITOR,
+  SD_STYLE_PANEL,
+  SD_PRESENCE,
+  SD_PALETTE,
+} from "./panelTypes.js";
 export { safeLocalStorage } from "./safeLocalStorage.js";
 export type { SafeLocalStorage } from "./safeLocalStorage.js";
 export {
