@@ -20,6 +20,128 @@
 /* Overlay primitive rules - DASH-T-0044                                      */
 /* -------------------------------------------------------------------------- */
 
+/* Overlay groups */
+.sd-content-overlay {
+  pointer-events: none;
+  z-index: var(--sd-z-overlay);
+}
+
+.sd-content-overlay > *,
+.sd-content-overlay__item {
+  pointer-events: auto;
+}
+
+/* Selection rings */
+.sd-selection-ring {
+  border-radius: var(--sd-radius-sm);
+  cursor: pointer;
+  transition:
+    background 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.sd-selection-ring:hover {
+  box-shadow: inset 0 0 0 var(--sd-ring-width) var(--sd-accent);
+}
+
+.sd-selection-ring--selected {
+  background: var(--sd-selected-soft);
+  box-shadow: inset 0 0 0 var(--sd-ring-width) var(--sd-selected);
+}
+
+/* Action chrome */
+.sd-actions {
+  position: absolute;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--sd-gap-sm);
+  pointer-events: auto;
+  z-index: var(--sd-z-overlay);
+}
+
+.sd-edit-button,
+.sd-remove-button,
+.sd-move-handle {
+  box-shadow: var(--sd-shadow-sm);
+}
+
+.sd-edit-button:focus-visible,
+.sd-remove-button:focus-visible,
+.sd-move-handle:focus-visible {
+  outline: var(--sd-focus-ring-width) solid var(--sd-focus-ring);
+  outline-offset: var(--sd-ring-width);
+}
+
+.sd-edit-button {
+  min-width: var(--sd-gap-lg);
+  min-height: var(--sd-gap-lg);
+  padding: var(--sd-gap-sm);
+  border: 1px solid var(--sd-border);
+  border-radius: var(--sd-radius-sm);
+  background: var(--sd-button-bg);
+  color: var(--sd-button-fg);
+  cursor: pointer;
+}
+
+.sd-edit-button:hover {
+  background: var(--sd-button-hover-bg);
+}
+
+.sd-remove-button {
+  width: calc(var(--sd-gap) + var(--sd-gap-sm));
+  height: calc(var(--sd-gap) + var(--sd-gap-sm));
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sd-danger);
+  color: var(--sd-handle-fg);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.sd-content-overlay:hover .sd-remove-button {
+  opacity: 0.92;
+}
+
+.sd-remove-button:hover {
+  opacity: 1;
+}
+
+.sd-move-handle {
+  min-width: var(--sd-gap-lg);
+  min-height: var(--sd-gap-lg);
+  padding: var(--sd-gap-sm);
+  border: 1px solid var(--sd-border);
+  border-radius: var(--sd-radius-sm);
+  background: var(--sd-handle-bg);
+  color: var(--sd-handle-fg);
+  cursor: grab;
+}
+
+.sd-move-handle:active {
+  cursor: grabbing;
+}
+
+/* Insert zones */
+.sd-insert-zone {
+  min-height: var(--sd-gap-sm);
+  border-top: 2px solid var(--sd-insert-zone);
+  pointer-events: auto;
+  transition:
+    background 0.12s ease,
+    border-color 0.12s ease;
+}
+
+.sd-insert-zone:hover,
+.sd-insert-zone:focus-visible,
+.sd-insert-zone[data-active="true"],
+.sd-insert-zone[data-active=""] {
+  background: var(--sd-insert-zone);
+  border-color: var(--sd-insert-zone-active);
+}
+
 /* -------------------------------------------------------------------------- */
 /* Panel, shell, and migrated admin-layout rules - DASH-T-0045                */
 /* -------------------------------------------------------------------------- */
