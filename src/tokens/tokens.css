@@ -6,14 +6,35 @@
  *
  *   import "@stardust-cms/dashboard/tokens";
  *
+ * ## `tokens` vs `theme.css` (DASH-I-0004 REQ-002)
+ *
+ * This file — the `@stardust-cms/dashboard/tokens` entry — is the TOKEN LAYER:
+ * the overridable `--sd-*` design-token vocabulary plus the MINIMAL structural
+ * rules for the originally-bundled `admin-*` / `ov-*` classes. It stays valid
+ * on its own for consumers who want the tokens (and the legacy bundled chrome)
+ * without the full composable theme.
+ *
+ * The separate `@stardust-cms/dashboard/theme.css` entry (added in DASH-T-0043)
+ * is the FULL DEFAULT THEME: it COMPOSES this token layer (`@import` of
+ * `tokens.css`) and adds the `sd-*` primitive rules for the DASH-I-0002/0003/0005
+ * overlay, panel, and shell primitives plus the migrated admin-layout styling.
+ * The relationship is composition, not a fork: `theme.css` imports these tokens;
+ * this file never depends on `theme.css`. Import `theme.css` for the
+ * batteries-included admin; import `tokens` alone for tokens + legacy chrome.
+ *
+ * Every `sd-*` primitive rule in `theme.css` is written EXCLUSIVELY in terms of
+ * the `var(--sd-*)` tokens defined here — so the token catalog below is the
+ * stable theming CONTRACT for the whole presentation surface. Re-theming (light
+ * → dark → brand) is token redefinition alone; no rule hard-codes a color.
+ *
  * ## Two layers, one file
  *
  *  1. `:root` **theme tokens** — the overridable design tokens (colors,
- *     spacing, radii, accents). This is a minimal DEFAULT LIGHT THEME, extracted
- *     and lightened from the SIFR demo's `styles.css`. Every bundled component
- *     (`Overlays`, `ConnectionStatus`, the `HostShell` canvas/layout) styles
- *     itself EXCLUSIVELY through these `var(--sd-*)` tokens — no hard-coded
- *     colors in the structural rules below.
+ *     spacing, radii, accents, control/field/layout values). A minimal DEFAULT
+ *     LIGHT THEME, extracted and lightened from the SIFR demo's `styles.css`.
+ *     Every bundled component (`Overlays`, `ConnectionStatus`, the `HostShell`
+ *     canvas/layout) and every `sd-*` primitive theme rule styles itself
+ *     EXCLUSIVELY through these `var(--sd-*)` tokens — no hard-coded colors.
  *  2. **structural rules** — the `admin-*` / `ov-*` class families the bundled
  *     components emit, written entirely in terms of the tokens above.
  *
@@ -60,10 +81,52 @@
   --sd-warn: #d97706;
   --sd-danger: #dc2626;
 
+  /* Surfaces — derived (list/nav hover + modal scrim for the shell primitives) */
+  --sd-surface-hover: rgba(99, 102, 241, 0.08);
+  --sd-scrim: rgba(15, 23, 42, 0.45);
+
+  /* Controls — overlay action buttons (edit / remove / move handle, insert zone).
+     Themeable affordances for the DASH-I-0002 overlay primitives. `remove` reuses
+     the `--sd-danger` status token; the neutral button + handle get their own. */
+  --sd-button-bg: #ffffff;
+  --sd-button-fg: #0f172a;
+  --sd-button-hover-bg: #f1f5f9;
+  --sd-handle-bg: #6366f1;
+  --sd-handle-fg: #ffffff;
+  --sd-insert-zone: rgba(99, 102, 241, 0.24);
+  --sd-insert-zone-active: #6366f1;
+
+  /* Form fields — FieldEditor / EditPanel / StylePanel inputs + labels. */
+  --sd-field-bg: #ffffff;
+  --sd-field-fg: #0f172a;
+  --sd-field-border: #cbd5e1;
+  --sd-label-fg: #475569;
+
+  /* Focus ring — keyboard-focus affordance across buttons, fields, and panels. */
+  --sd-focus-ring: #6366f1;
+  --sd-focus-ring-width: 2px;
+
   /* Shape & rhythm */
   --sd-radius: 8px;
+  --sd-radius-sm: 4px;
   --sd-gap: 16px;
+  --sd-gap-sm: 8px;
+  --sd-gap-lg: 32px;
+  --sd-ring-width: 2px;
   --sd-shadow: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --sd-shadow-sm: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+  /* Layout geometry — the shell grid dimensions the migrated admin-layout uses.
+     Tokenised so a consumer can widen the side panel / sidebar via redefinition
+     alone (DASH-T-0045 migrates `admin-layout` + shell regions onto these). */
+  --sd-sidebar-width: 240px;
+  --sd-panel-width: 320px;
+  --sd-topbar-height: 48px;
+
+  /* Stacking — keeps overlay chrome, sticky status, and the modal host ordered. */
+  --sd-z-overlay: 20;
+  --sd-z-status: 10;
+  --sd-z-modal: 100;
 
   /* Typography (only a family default; sizes stay in the structural rules). */
   --sd-font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI",
