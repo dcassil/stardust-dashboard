@@ -7,7 +7,10 @@ import path from "node:path";
 
 const root = path.resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-const assets = [["src/tokens/tokens.css", "dist/tokens/tokens.css"]];
+const assets = [
+  ["src/tokens/tokens.css", "dist/tokens/tokens.css"],
+  ["src/tokens/theme.css", "dist/tokens/theme.css"],
+];
 
 for (const [from, to] of assets) {
   const dest = path.join(root, to);
