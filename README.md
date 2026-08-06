@@ -162,9 +162,136 @@ interface BlockType {
 
 - **Overlays** wrap the published unstyled primitives. Pass `renderOverlayChrome`, or use `<Overlays>`
   directly with `renderItemChrome`, `showDeleteButton`, and class-name overrides.
-- **Theme** ships as `:root` CSS custom properties (`--sd-bg`, `--sd-accent`, `--sd-danger`, …). Import
-  `@stardust-cms/dashboard/tokens` once, then redeclare any `--sd-*` variable under your own `:root`
-  to restyle the bundled UI without forking.
+- **Theme** is opt-in CSS. Use `tokens` when you only need the variables plus legacy bundled chrome;
+  use `theme.css` when you want the full default admin theme.
+
+### Importing CSS
+
+```tsx
+import "@stardust-cms/dashboard/tokens";
+```
+
+The `tokens` entry provides the `--sd-*` design tokens plus minimal structural rules for the
+originally-bundled `admin-*` / `ov-*` classes. Use it when you want the tokens (and legacy bundled
+chrome) only.
+
+```tsx
+import "@stardust-cms/dashboard/theme.css";
+```
+
+`theme.css` is the batteries-included FULL default theme. It `@import`s the token layer and adds
+token-driven rules for every `sd-*` primitive (overlay + panel + shell) plus the migrated admin
+layout. Use it for a complete good-looking admin from one import. `theme.css` composes `tokens.css`;
+importing the package JS does not pull either CSS, so both entries are explicit side-effect imports.
+
+### Token catalog
+
+| Group | Tokens |
+| --- | --- |
+| Surfaces | `--sd-bg`, `--sd-panel-bg`, `--sd-panel-fg`, `--sd-muted`, `--sd-border`, `--sd-canvas-bg`, `--sd-surface-hover`, `--sd-scrim` |
+| Accents | `--sd-accent`, `--sd-accent-soft`, `--sd-selected`, `--sd-selected-soft` |
+| Status | `--sd-ok`, `--sd-warn`, `--sd-danger` |
+| Controls (overlay affordances) | `--sd-button-bg`, `--sd-button-fg`, `--sd-button-hover-bg`, `--sd-handle-bg`, `--sd-handle-fg`, `--sd-insert-zone`, `--sd-insert-zone-active` |
+| Form fields | `--sd-field-bg`, `--sd-field-fg`, `--sd-field-border`, `--sd-label-fg` |
+| Focus ring | `--sd-focus-ring`, `--sd-focus-ring-width` |
+| Shape & rhythm | `--sd-radius`, `--sd-radius-sm`, `--sd-gap`, `--sd-gap-sm`, `--sd-gap-lg`, `--sd-ring-width`, `--sd-shadow`, `--sd-shadow-sm` |
+| Layout geometry | `--sd-sidebar-width`, `--sd-panel-width`, `--sd-topbar-height` |
+| Stacking | `--sd-z-overlay`, `--sd-z-status`, `--sd-z-modal` |
+| Typography | `--sd-font-family` |
+
+### Stable class hooks
+
+These `sd-*` names are stable, targetable selectors:
+
+- **Overlay:** `sd-content-overlay` (+ `sd-content-overlay__item`), `sd-selection-ring`
+  (+ `sd-selection-ring--selected`), `sd-actions`, `sd-edit-button`, `sd-remove-button`,
+  `sd-move-handle`, `sd-insert-zone`.
+- **Panel:** `sd-side-panel`, `sd-panel-section`, `sd-edit-panel`, `sd-field-editor`,
+  `sd-style-panel`, `sd-presence` (+ `sd-presence__item`, `sd-presence__dot`), `sd-palette`,
+  `sd-sidebar` (+ BEM sub-elements `sd-sidebar__header`, `sd-sidebar__body`,
+  `sd-sidebar__footer`, `sd-sidebar__nav`, `sd-sidebar__tabs`, `sd-sidebar__tab`,
+  `sd-sidebar__tab-content`, `sd-sidebar__trigger`, `sd-sidebar__collapse`,
+  `sd-sidebar__panel` and states `sd-sidebar--open`, `sd-sidebar--collapsed`).
+- **Shell regions:** `sd-shell-root`, `sd-topbar` (+ `sd-topbar__status`),
+  `sd-main-content`, `sd-iframe-area`, `sd-overlay-layer`, `sd-modal-host`
+  (+ `sd-modal-host__dialog`), `sd-footer`, `sd-command-region`.
+
+These names are a STABLE contract, single-sourced as exported constants in
+`overlays/overlaysTypes.ts`, `blocks/panelTypes.ts`, and `layout/layoutTypes.ts`. A DASH-T-0046
+emitted-vs-styled test backstops the catalog so it cannot drift.
+
+### Override recipes
+
+1. Token redefinition (global re-theme): import `theme.css`, then redeclare any `--sd-*` tokens in a
+   later stylesheet.
+
+```tsx
+import "@stardust-cms/dashboard/theme.css";
+import "./admin-theme.css";
+```
+
+```css
+:root {
+  --sd-bg: #fff7ed;
+  --sd-panel-fg: #1f2937;
+  --sd-accent: #2563eb;
+  --sd-danger: #b91c1c;
+}
+```
+
+1. `sd-*` class targeting (restyle one primitive): keep the default structure and target one stable
+   hook.
+
+```css
+.sd-edit-button {
+  border-radius: 999px;
+  background: var(--sd-accent);
+  color: var(--sd-button-fg);
+  box-shadow: var(--sd-shadow-sm);
+}
+
+.sd-edit-button:hover {
+  background: var(--sd-button-hover-bg);
+}
+```
+
+1. Per-instance `className` / `style` (restyle one instance): every primitive merges `className`
+   OVER its default hook and applies `style`.
+
+```tsx
+import { EditButton } from "@stardust-cms/dashboard";
+
+<EditButton
+  className="my-edit"
+  style={{
+    background: "var(--sd-accent)",
+    color: "var(--sd-button-fg)",
+  }}
+/>
+```
+
+### Dark theme
+
+Use token redefinition only; no class or component changes are required.
+
+```css
+:root {
+  --sd-bg: #0f172a;
+  --sd-panel-fg: #e2e8f0;
+  --sd-accent: #14b8a6;
+  --sd-danger: #22c55e;
+}
+```
+
+This is the validated Use Case 2 recipe, backstopped by the DASH-T-0046 dark-recipe test. The same
+technique reproduces a dark sidebar rail without forking.
+
+### Demo migration
+
+The package theme now owns the admin-chrome CSS: layout grid, panel/section, fields, palette,
+buttons, and status. The demo consumes `theme.css` and keeps only demo-specific styling: brand
+identity, versioning UI, palette icon decoration, drop-zone ornamentation, site content, and the
+dark-rail token overrides. Full migration inventory is tracked in Metis DASH-T-0045 / DEMO-I-0001.
 
 ---
 
