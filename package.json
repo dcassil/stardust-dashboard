@@ -27,6 +27,9 @@
     "./tokens": {
       "import": "./dist/tokens/tokens.css"
     },
+    "./theme.css": {
+      "import": "./dist/tokens/theme.css"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

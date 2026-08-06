@@ -1,0 +1,25 @@
+/**
+ * @stardust-cms/dashboard/theme.css - full default admin theme entry.
+ *
+ * This is the batteries-included admin theme. It COMPOSES the token layer via
+ * `@import "./tokens.css";`; the relative import resolves from package output
+ * because `scripts/copy-assets.mjs` copies both files under `dist/tokens/`.
+ *
+ * This file is the HOME for the admin-* / ov-* / sd-* primitive rules that are
+ * added in follow-up tasks: DASH-T-0044 adds the sd-* overlay rules, and
+ * DASH-T-0045 adds the sd-* panel/shell rules plus migrated admin-layout
+ * styling.
+ *
+ * Every rule in this file will use only `var(--sd-*)` tokens - no hard-coded
+ * colors. Import `theme.css` for the full admin, or import `tokens` alone for
+ * tokens + legacy chrome.
+ */
+@import "./tokens.css";
+
+/* -------------------------------------------------------------------------- */
+/* Overlay primitive rules - DASH-T-0044                                      */
+/* -------------------------------------------------------------------------- */
+
+/* -------------------------------------------------------------------------- */
+/* Panel, shell, and migrated admin-layout rules - DASH-T-0045                */
+/* -------------------------------------------------------------------------- */
